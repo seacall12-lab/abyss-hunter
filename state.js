@@ -9,7 +9,6 @@
 
   const Data = global.GameData;
   const CONFIG = Data.CONFIG;
-
   const STORAGE_KEY = CONFIG.STORAGE_KEY;
   const SAVE_VERSION = CONFIG.SAVE_VERSION;
 
@@ -104,11 +103,6 @@
     );
   }
 
-  /*
-   * 기본 상태에 기존 저장 데이터를 합친다.
-   *
-   * 새 버전에 필드가 추가되어도 기본값이 자동으로 보완된다.
-   */
   function mergeDefaults(
     defaultValue,
     incomingValue
@@ -143,9 +137,8 @@
               .hasOwnProperty
               .call(result, key)
           ) {
-            result[key] = clone(
-              source[key]
-            );
+            result[key] =
+              clone(source[key]);
           }
         }
       );
@@ -207,7 +200,10 @@
       totalDamageDealt: 0,
       totalDamageTaken: 0,
       totalItemsFound: 0,
+      totalItemsEquipped: 0,
+      totalAutoEquips: 0,
       highestSingleHit: 0,
+      highestPower: 0,
       playTimeSeconds: 0
     };
   }
@@ -276,9 +272,6 @@
         clearedBossRegionIds: []
       },
 
-      /*
-       * v0.2 장비 장착 시스템을 위한 구조
-       */
       equipment:
         createEmptyEquipment(),
 
@@ -294,10 +287,20 @@
           CONFIG.DEFAULT_SPEED,
 
         paused: false,
-
         reducedEffects: false,
+        showDamageNumbers: true,
 
-        showDamageNumbers: true
+        activeView:
+          CONFIG.DEFAULT_VIEW,
+
+        inventorySort:
+          "newest",
+
+        inventorySlotFilter:
+          "all",
+
+        inventoryRarityFilter:
+          "all"
       },
 
       statistics:
@@ -329,12 +332,13 @@
             .hasOwnProperty
             .call(incoming, key)
         ) {
-          result[key] = finiteNumber(
-            incoming[key],
-            0,
-            -999999999,
-            999999999
-          );
+          result[key] =
+            finiteNumber(
+              incoming[key],
+              0,
+              -999999999,
+              999999999
+            );
         }
       }
     );
@@ -359,12 +363,17 @@
           return null;
         }
 
+        const statMeta =
+          Data.getStatMeta(
+            option.stat
+          );
+
         return {
           stat: option.stat,
 
           name: safeString(
             option.name,
-            option.stat,
+            statMeta.name,
             40
           ),
 
@@ -376,7 +385,8 @@
           ),
 
           type:
-            option.type === "ratio"
+            option.type === "ratio" ||
+            statMeta.type === "ratio"
               ? "ratio"
               : "flat"
         };
@@ -384,10 +394,6 @@
       .filter(Boolean);
   }
 
-  /*
-   * 저장된 장비 데이터가 손상되었거나
-   * 필드가 빠졌을 때 안전한 구조로 복구한다.
-   */
   function normalizeItem(
     item,
     fallbackIndex
@@ -420,6 +426,7 @@
       "item",
       Date.now().toString(36),
       String(fallbackIndex || 0),
+
       Math.random()
         .toString(36)
         .slice(2, 7)
@@ -441,36 +448,41 @@
       slot: slotId,
       rarity: rarityId,
 
-      requiredLevel: finiteInteger(
-        item.requiredLevel,
-        1,
-        1,
-        CONFIG.MAX_LEVEL
-      ),
+      requiredLevel:
+        finiteInteger(
+          item.requiredLevel,
+          1,
+          1,
+          CONFIG.MAX_LEVEL
+        ),
 
-      itemLevel: finiteInteger(
-        item.itemLevel,
-        item.requiredLevel || 1,
-        1,
-        CONFIG.MAX_LEVEL
-      ),
+      itemLevel:
+        finiteInteger(
+          item.itemLevel,
+          item.requiredLevel || 1,
+          1,
+          CONFIG.MAX_LEVEL
+        ),
 
-      enhancement: finiteInteger(
-        item.enhancement,
-        0,
-        0,
-        99
-      ),
+      enhancement:
+        finiteInteger(
+          item.enhancement,
+          0,
+          0,
+          99
+        ),
 
-      locked: safeBoolean(
-        item.locked,
-        false
-      ),
+      locked:
+        safeBoolean(
+          item.locked,
+          false
+        ),
 
-      equipped: safeBoolean(
-        item.equipped,
-        false
-      ),
+      equipped:
+        safeBoolean(
+          item.equipped,
+          false
+        ),
 
       baseStats:
         normalizeStatMap(
@@ -490,32 +502,203 @@
           item.options
         ),
 
-      salvageValue: finiteInteger(
-        item.salvageValue,
-        0,
-        0,
-        999999999
-      ),
+      salvageValue:
+        finiteInteger(
+          item.salvageValue,
+          0,
+          0,
+          999999999
+        ),
 
-      sellValue: finiteInteger(
-        item.sellValue,
-        0,
-        0,
-        999999999
-      ),
+      sellValue:
+        finiteInteger(
+          item.sellValue,
+          0,
+          0,
+          999999999
+        ),
 
-      acquiredAt: finiteInteger(
-        item.acquiredAt,
-        Date.now(),
-        0,
-        Number.MAX_SAFE_INTEGER
-      )
+      acquiredAt:
+        finiteInteger(
+          item.acquiredAt,
+          Date.now(),
+          0,
+          Number.MAX_SAFE_INTEGER
+        )
     };
   }
 
-  /*
-   * 현재 장착 중인 모든 장비의 능력치를 합산한다.
-   */
+  function ensureUniqueItemId(
+    item,
+    usedIds
+  ) {
+    if (!item) {
+      return null;
+    }
+
+    let candidateId = item.id;
+
+    while (
+      usedIds.has(candidateId)
+    ) {
+      candidateId =
+        item.id +
+        "-" +
+        Math.random()
+          .toString(36)
+          .slice(2, 7);
+    }
+
+    item.id = candidateId;
+    usedIds.add(candidateId);
+
+    return item;
+  }
+
+  function normalizeEquipment(
+    source,
+    usedIds
+  ) {
+    const result =
+      createEmptyEquipment();
+
+    const incoming =
+      isPlainObject(source)
+        ? source
+        : {};
+
+    Object.keys(result).forEach(
+      function (slotId, index) {
+        const normalized =
+          normalizeItem(
+            incoming[slotId],
+            index
+          );
+
+        if (
+          normalized &&
+          normalized.slot === slotId
+        ) {
+          normalized.equipped = true;
+
+          result[slotId] =
+            ensureUniqueItemId(
+              normalized,
+              usedIds
+            );
+        }
+      }
+    );
+
+    return result;
+  }
+
+  function normalizeInventory(
+    source,
+    usedIds
+  ) {
+    if (!Array.isArray(source)) {
+      return [];
+    }
+
+    return source
+      .slice(
+        0,
+        CONFIG.MAX_INVENTORY
+      )
+      .map(function (item, index) {
+        const normalized =
+          normalizeItem(
+            item,
+            index
+          );
+
+        if (!normalized) {
+          return null;
+        }
+
+        normalized.equipped = false;
+
+        return ensureUniqueItemId(
+          normalized,
+          usedIds
+        );
+      })
+      .filter(Boolean);
+  }
+
+  function addStatMap(
+    target,
+    statMap
+  ) {
+    if (!isPlainObject(statMap)) {
+      return;
+    }
+
+    Data.STAT_KEYS.forEach(
+      function (key) {
+        target[key] +=
+          finiteNumber(
+            statMap[key],
+            0,
+            -999999999,
+            999999999
+          );
+      }
+    );
+  }
+
+  function collectItemBonuses(item) {
+    const bonuses = {};
+
+    Data.STAT_KEYS.forEach(
+      function (key) {
+        bonuses[key] = 0;
+      }
+    );
+
+    if (!item) {
+      return bonuses;
+    }
+
+    addStatMap(
+      bonuses,
+      item.baseStats
+    );
+
+    addStatMap(
+      bonuses,
+      item.bonusStats
+    );
+
+    if (
+      Array.isArray(
+        item.randomOptions
+      )
+    ) {
+      item.randomOptions.forEach(
+        function (option) {
+          if (
+            option &&
+            Data.STAT_KEYS.includes(
+              option.stat
+            )
+          ) {
+            bonuses[option.stat] +=
+              finiteNumber(
+                option.value,
+                0,
+                -999999999,
+                999999999
+              );
+          }
+        }
+      );
+    }
+
+    return bonuses;
+  }
+
   function collectEquipmentBonuses(
     targetState
   ) {
@@ -527,74 +710,81 @@
       }
     );
 
-    function addStatMap(statMap) {
-      if (!isPlainObject(statMap)) {
-        return;
-      }
-
-      Data.STAT_KEYS.forEach(
-        function (key) {
-          bonuses[key] +=
-            finiteNumber(
-              statMap[key],
-              0,
-              -999999999,
-              999999999
-            );
-        }
-      );
-    }
-
     Object.keys(
       Data.ITEM_SLOTS
     ).forEach(function (slotId) {
       const item =
-        targetState.equipment[slotId];
+        targetState
+          .equipment[slotId];
 
-      if (!item) {
-        return;
-      }
+      const itemBonuses =
+        collectItemBonuses(item);
 
-      addStatMap(item.baseStats);
-      addStatMap(item.bonusStats);
-
-      if (
-        Array.isArray(
-          item.randomOptions
-        )
-      ) {
-        item.randomOptions.forEach(
-          function (option) {
-            if (
-              option &&
-              Data.STAT_KEYS.includes(
-                option.stat
-              )
-            ) {
-              bonuses[option.stat] +=
-                finiteNumber(
-                  option.value,
-                  0,
-                  -999999999,
-                  999999999
-                );
-            }
-          }
-        );
-      }
+      Data.STAT_KEYS.forEach(
+        function (key) {
+          bonuses[key] +=
+            itemBonuses[key];
+        }
+      );
     });
 
     return bonuses;
   }
 
-  /*
-   * 화면에 표시할 전투력 계산
-   *
-   * 전투력은 비교용 수치이며 실제 피해 계산식과는 별개다.
-   */
-  function computeCombatPower(
-    player
+  function computeItemScore(item) {
+    if (!item) {
+      return 0;
+    }
+
+    const bonuses =
+      collectItemBonuses(item);
+
+    let score = 0;
+
+    Data.STAT_KEYS.forEach(
+      function (key) {
+        score +=
+          bonuses[key] *
+          Data
+            .getStatMeta(key)
+            .powerWeight;
+      }
+    );
+
+    score +=
+      finiteNumber(
+        item.enhancement,
+        0,
+        0,
+        99
+      ) * 12;
+
+    return Math.max(
+      0,
+      Math.round(score)
+    );
+  }
+
+  function computeEquipmentPower(
+    targetState
   ) {
+    return Object.keys(
+      Data.ITEM_SLOTS
+    ).reduce(
+      function (sum, slotId) {
+        return (
+          sum +
+          computeItemScore(
+            targetState
+              .equipment[slotId]
+          )
+        );
+      },
+      0
+    );
+  }
+
+  function computeCombatPower(player) {
     const rawPower =
       player.maxHp * 0.18 +
       player.attack * 5.2 +
@@ -615,9 +805,6 @@
     );
   }
 
-  /*
-   * 레벨 기본 능력치와 장비 능력치를 다시 계산한다.
-   */
   function applyDerivedPlayerStats(
     targetState,
     options
@@ -625,12 +812,13 @@
     const settings = options || {};
     const player = targetState.player;
 
-    const oldMaxHp = finiteNumber(
-      player.maxHp,
-      1,
-      1,
-      999999999
-    );
+    const oldMaxHp =
+      finiteNumber(
+        player.maxHp,
+        1,
+        1,
+        999999999
+      );
 
     const oldCurrentHp =
       finiteNumber(
@@ -781,29 +969,45 @@
         player.maxHp;
     }
 
+    if (targetState.statistics) {
+      targetState
+        .statistics
+        .highestPower =
+        Math.max(
+          finiteInteger(
+            targetState
+              .statistics
+              .highestPower,
+            0,
+            0,
+            Number.MAX_SAFE_INTEGER
+          ),
+
+          player.power
+        );
+    }
+
     return player;
   }
 
-  /*
-   * 경험치가 요구량보다 많으면
-   * 저장 불러오기 과정에서 자동으로 레벨을 보정한다.
-   */
   function normalizeLevelAndExperience(
     player
   ) {
-    player.level = finiteInteger(
-      player.level,
-      1,
-      1,
-      CONFIG.MAX_LEVEL
-    );
+    player.level =
+      finiteInteger(
+        player.level,
+        1,
+        1,
+        CONFIG.MAX_LEVEL
+      );
 
-    player.exp = finiteInteger(
-      player.exp,
-      0,
-      0,
-      Number.MAX_SAFE_INTEGER
-    );
+    player.exp =
+      finiteInteger(
+        player.exp,
+        0,
+        0,
+        Number.MAX_SAFE_INTEGER
+      );
 
     let guard = 0;
 
@@ -833,83 +1037,15 @@
       player.level =
         CONFIG.MAX_LEVEL;
 
-      player.exp = Math.min(
-        player.exp,
-        Data.getRequiredExp(
-          CONFIG.MAX_LEVEL
-        ) - 1
-      );
-    }
-  }
+      player.exp =
+        Math.min(
+          player.exp,
 
-  function normalizeEquipment(source) {
-    const result =
-      createEmptyEquipment();
-
-    const incoming =
-      isPlainObject(source)
-        ? source
-        : {};
-
-    Object.keys(result).forEach(
-      function (slotId, index) {
-        const normalized =
-          normalizeItem(
-            incoming[slotId],
-            index
-          );
-
-        if (
-          normalized &&
-          normalized.slot === slotId
-        ) {
-          normalized.equipped = true;
-          result[slotId] =
-            normalized;
-        }
-      }
-    );
-
-    return result;
-  }
-
-  function normalizeInventory(source) {
-    if (!Array.isArray(source)) {
-      return [];
-    }
-
-    const seenIds = new Set();
-
-    return source
-      .slice(
-        0,
-        CONFIG.MAX_INVENTORY
-      )
-      .map(function (item, index) {
-        return normalizeItem(
-          item,
-          index
+          Data.getRequiredExp(
+            CONFIG.MAX_LEVEL
+          ) - 1
         );
-      })
-      .filter(function (item) {
-        if (!item) {
-          return false;
-        }
-
-        if (seenIds.has(item.id)) {
-          item.id =
-            item.id +
-            "-" +
-            Math.random()
-              .toString(36)
-              .slice(2, 6);
-        }
-
-        seenIds.add(item.id);
-        item.equipped = false;
-
-        return true;
-      });
+    }
   }
 
   function normalizeProgression(
@@ -950,10 +1086,6 @@
         999999999
       );
 
-    /*
-     * 저장 데이터상 처치 수가 웨이브 기준을 넘으면
-     * 웨이브와 남은 처치 수로 자동 변환한다.
-     */
     if (
       progression.defeatedInWave >=
       CONFIG.MONSTERS_PER_WAVE
@@ -971,6 +1103,7 @@
     progression.highestWave =
       Math.max(
         progression.currentWave,
+
         finiteInteger(
           progression.highestWave,
           progression.currentWave,
@@ -1044,9 +1177,84 @@
         : [];
   }
 
-  /*
-   * 저장 데이터를 현재 버전의 안전한 상태로 정리한다.
-   */
+  function normalizeSettings(
+    settings
+  ) {
+    const storedSpeed =
+      Number(settings.speed);
+
+    settings.speed =
+      CONFIG
+        .SPEED_OPTIONS
+        .includes(storedSpeed)
+        ? storedSpeed
+        : CONFIG.DEFAULT_SPEED;
+
+    settings.paused =
+      safeBoolean(
+        settings.paused,
+        false
+      );
+
+    settings.reducedEffects =
+      safeBoolean(
+        settings.reducedEffects,
+        false
+      );
+
+    settings.showDamageNumbers =
+      safeBoolean(
+        settings.showDamageNumbers,
+        true
+      );
+
+    settings.activeView =
+      [
+        "hunt",
+        "equipment"
+      ].includes(
+        settings.activeView
+      )
+        ? settings.activeView
+        : CONFIG.DEFAULT_VIEW;
+
+    settings.inventorySort =
+      CONFIG
+        .INVENTORY_SORT_OPTIONS
+        .includes(
+          settings.inventorySort
+        )
+        ? settings.inventorySort
+        : "newest";
+
+    settings.inventorySlotFilter =
+      settings.inventorySlotFilter ===
+        "all" ||
+      Object.prototype
+        .hasOwnProperty
+        .call(
+          Data.ITEM_SLOTS,
+          settings.inventorySlotFilter
+        )
+        ? settings.inventorySlotFilter
+        : "all";
+
+    settings.inventoryRarityFilter =
+      settings
+        .inventoryRarityFilter ===
+        "all" ||
+      Object.prototype
+        .hasOwnProperty
+        .call(
+          Data.RARITIES,
+          settings
+            .inventoryRarityFilter
+        )
+        ? settings
+            .inventoryRarityFilter
+        : "all";
+  }
+
   function sanitizeState(
     incomingState
   ) {
@@ -1082,14 +1290,18 @@
       sanitized.player
     );
 
+    const usedIds = new Set();
+
     sanitized.equipment =
       normalizeEquipment(
-        sanitized.equipment
+        sanitized.equipment,
+        usedIds
       );
 
     sanitized.inventory =
       normalizeInventory(
-        sanitized.inventory
+        sanitized.inventory,
+        usedIds
       );
 
     sanitized.currencies.gold =
@@ -1112,43 +1324,9 @@
         Number.MAX_SAFE_INTEGER
       );
 
-    const storedSpeed =
-      Number(
-        sanitized.settings.speed
-      );
-
-    sanitized.settings.speed =
-      CONFIG.SPEED_OPTIONS.includes(
-        storedSpeed
-      )
-        ? storedSpeed
-        : CONFIG.DEFAULT_SPEED;
-
-    sanitized.settings.paused =
-      safeBoolean(
-        sanitized.settings.paused,
-        false
-      );
-
-    sanitized
-      .settings
-      .reducedEffects =
-      safeBoolean(
-        sanitized
-          .settings
-          .reducedEffects,
-        false
-      );
-
-    sanitized
-      .settings
-      .showDamageNumbers =
-      safeBoolean(
-        sanitized
-          .settings
-          .showDamageNumbers,
-        true
-      );
+    normalizeSettings(
+      sanitized.settings
+    );
 
     const defaultStatistics =
       createDefaultStatistics();
@@ -1160,6 +1338,7 @@
         finiteNumber(
           sanitized
             .statistics[key],
+
           defaultStatistics[key],
           0,
           Number.MAX_SAFE_INTEGER
@@ -1203,10 +1382,6 @@
         Number.MAX_SAFE_INTEGER
       );
 
-    /*
-     * 새로 불러올 때 HP가 0인 상태면
-     * 정상적으로 사냥을 재개할 수 있도록 회복한다.
-     */
     applyDerivedPlayerStats(
       sanitized,
       {
@@ -1218,10 +1393,6 @@
     return sanitized;
   }
 
-  /*
-   * saveVersion이 없거나 0인 초기 저장 형식을
-   * 현재 버전 구조로 변환한다.
-   */
   function migrateLegacySave(
     rawState
   ) {
@@ -1238,6 +1409,9 @@
         SAVE_VERSION
       );
 
+    /*
+     * saveVersion 0 또는 이전 단순 저장 구조
+     */
     if (version < 1) {
       migrated.player =
         isPlainObject(
@@ -1274,9 +1448,6 @@
           ? migrated.statistics
           : {};
 
-      /*
-       * 이전 단순 저장 형식이 있을 경우를 대비한 변환
-       */
       if (
         migrated.gold !== undefined &&
         migrated
@@ -1334,6 +1505,128 @@
       }
 
       version = 1;
+
+      migrated.saveVersion =
+        version;
+    }
+
+    /*
+     * v0.1 → v0.2 마이그레이션
+     */
+    if (version < 2) {
+      migrated.equipment =
+        isPlainObject(
+          migrated.equipment
+        )
+          ? migrated.equipment
+          : createEmptyEquipment();
+
+      migrated.inventory =
+        Array.isArray(
+          migrated.inventory
+        )
+          ? migrated.inventory
+          : [];
+
+      migrated.settings =
+        isPlainObject(
+          migrated.settings
+        )
+          ? migrated.settings
+          : {};
+
+      migrated.statistics =
+        isPlainObject(
+          migrated.statistics
+        )
+          ? migrated.statistics
+          : {};
+
+      if (
+        migrated
+          .settings
+          .activeView === undefined
+      ) {
+        migrated
+          .settings
+          .activeView =
+          CONFIG.DEFAULT_VIEW;
+      }
+
+      if (
+        migrated
+          .settings
+          .inventorySort ===
+          undefined
+      ) {
+        migrated
+          .settings
+          .inventorySort =
+          "newest";
+      }
+
+      if (
+        migrated
+          .settings
+          .inventorySlotFilter ===
+          undefined
+      ) {
+        migrated
+          .settings
+          .inventorySlotFilter =
+          "all";
+      }
+
+      if (
+        migrated
+          .settings
+          .inventoryRarityFilter ===
+          undefined
+      ) {
+        migrated
+          .settings
+          .inventoryRarityFilter =
+          "all";
+      }
+
+      if (
+        migrated
+          .statistics
+          .totalItemsEquipped ===
+          undefined
+      ) {
+        migrated
+          .statistics
+          .totalItemsEquipped =
+          0;
+      }
+
+      if (
+        migrated
+          .statistics
+          .totalAutoEquips ===
+          undefined
+      ) {
+        migrated
+          .statistics
+          .totalAutoEquips =
+          0;
+      }
+
+      if (
+        migrated
+          .statistics
+          .highestPower ===
+          undefined
+      ) {
+        migrated
+          .statistics
+          .highestPower =
+          0;
+      }
+
+      version = 2;
+
       migrated.saveVersion =
         version;
     }
@@ -1344,9 +1637,6 @@
     return migrated;
   }
 
-  /*
-   * JSON 파싱이 불가능한 저장 데이터는 별도 키로 백업한다.
-   */
   function backupCorruptedSave(
     rawText
   ) {
@@ -1384,9 +1674,6 @@
           STORAGE_KEY
         );
 
-      /*
-       * 기존 저장이 없으면 새 게임 생성
-       */
       if (!rawText) {
         state =
           createDefaultState();
@@ -1411,23 +1698,36 @@
       const parsed =
         JSON.parse(rawText);
 
+      const previousVersion =
+        finiteInteger(
+          parsed &&
+            parsed.saveVersion,
+          0,
+          0,
+          SAVE_VERSION
+        );
+
       const migrated =
         migrateLegacySave(parsed);
 
       state =
         sanitizeState(migrated);
 
-      /*
-       * 마이그레이션 또는 보정된 내용을
-       * 다음 자동 저장 시 다시 기록한다.
-       */
       dirty = true;
 
       emit("load", {
         source: "storage",
         recovered: false,
+
+        previousSaveVersion:
+          previousVersion,
+
         saveVersion:
-          state.saveVersion
+          state.saveVersion,
+
+        migrated:
+          previousVersion <
+          SAVE_VERSION
       });
 
       return state;
@@ -1484,9 +1784,6 @@
         createDefaultState();
     }
 
-    /*
-     * 변경 내용이 없으면 불필요한 저장을 하지 않는다.
-     */
     if (!dirty && !force) {
       return true;
     }
@@ -1535,9 +1832,6 @@
     }
   }
 
-  /*
-   * 모든 진행 데이터를 초기화한다.
-   */
   function reset() {
     lastError = null;
 
@@ -1624,17 +1918,17 @@
     );
 
     emit("player-stats", {
-      player: player
+      player: player,
+
+      equipmentPower:
+        computeEquipmentPower(
+          getState()
+        )
     });
 
     return player;
   }
 
-  /*
-   * 경험치 지급과 레벨업 처리
-   *
-   * 레벨업 시 HP를 전부 회복한다.
-   */
   function addExperience(amount) {
     const currentState =
       getState();
@@ -1692,12 +1986,14 @@
       player.level =
         CONFIG.MAX_LEVEL;
 
-      player.exp = Math.min(
-        player.exp,
-        Data.getRequiredExp(
-          CONFIG.MAX_LEVEL
-        ) - 1
-      );
+      player.exp =
+        Math.min(
+          player.exp,
+
+          Data.getRequiredExp(
+            CONFIG.MAX_LEVEL
+          ) - 1
+        );
     }
 
     applyDerivedPlayerStats(
@@ -1731,9 +2027,6 @@
     };
   }
 
-  /*
-   * 골드 획득량 증가 옵션을 적용해 골드를 지급한다.
-   */
   function addGold(amount) {
     const currentState =
       getState();
@@ -1765,7 +2058,9 @@
       return 0;
     }
 
-    currentState.currencies.gold =
+    currentState
+      .currencies
+      .gold =
       Math.min(
         Number.MAX_SAFE_INTEGER,
 
@@ -1830,11 +2125,6 @@
     return true;
   }
 
-  /*
-   * 현재 웨이브의 처치 수를 증가시킨다.
-   *
-   * 몬스터 5마리 처치 시 다음 웨이브로 이동한다.
-   */
   function advanceMonsterProgress() {
     const progression =
       getState().progression;
@@ -1849,6 +2139,7 @@
       CONFIG.MONSTERS_PER_WAVE
     ) {
       progression.defeatedInWave = 0;
+
       progression.currentWave += 1;
 
       progression.highestWave =
@@ -1888,9 +2179,6 @@
     };
   }
 
-  /*
-   * 누적 처치 수와 웨이브 진행도를 동시에 처리한다.
-   */
   function recordMonsterKill() {
     const currentState =
       getState();
@@ -1930,25 +2218,22 @@
     return player.currentHp;
   }
 
-  /*
-   * 방어력 적용 후 최종 피해량을 combat.js에서 계산하고
-   * 이 함수에는 실제 받을 피해량을 전달한다.
-   */
   function damagePlayer(amount) {
     const currentState =
       getState();
 
-    const damage = Math.max(
-      0,
-      Math.round(
-        finiteNumber(
-          amount,
-          0,
-          0,
-          999999999
+    const damage =
+      Math.max(
+        0,
+        Math.round(
+          finiteNumber(
+            amount,
+            0,
+            0,
+            999999999
+          )
         )
-      )
-    );
+      );
 
     if (
       damage <= 0 ||
@@ -1964,6 +2249,7 @@
         currentState
           .player
           .currentHp,
+
         damage
       );
 
@@ -2033,6 +2319,7 @@
     player.currentHp =
       Math.min(
         player.maxHp,
+
         player.currentHp +
         healing
       );
@@ -2069,9 +2356,6 @@
     return player.currentHp;
   }
 
-  /*
-   * 플레이어가 입힌 피해 통계 기록
-   */
   function recordPlayerDamageDealt(
     amount,
     isCritical
@@ -2079,17 +2363,18 @@
     const currentState =
       getState();
 
-    const damage = Math.max(
-      0,
-      Math.round(
-        finiteNumber(
-          amount,
-          0,
-          0,
-          999999999
+    const damage =
+      Math.max(
+        0,
+        Math.round(
+          finiteNumber(
+            amount,
+            0,
+            0,
+            999999999
+          )
         )
-      )
-    );
+      );
 
     currentState
       .statistics
@@ -2103,6 +2388,7 @@
         currentState
           .statistics
           .highestSingleHit,
+
         damage
       );
 
@@ -2119,32 +2405,62 @@
     }
   }
 
-  /*
-   * v0.1 장비 드롭을 인벤토리에 저장한다.
-   *
-   * 실제 장비 목록 화면과 장착 기능은 v0.2에서 추가한다.
-   */
   function addInventoryItem(item) {
     const currentState =
       getState();
 
+    if (
+      currentState
+        .inventory
+        .length >=
+      CONFIG.MAX_INVENTORY
+    ) {
+      return false;
+    }
+
     const normalizedItem =
       normalizeItem(
         item,
+
         currentState
           .inventory
           .length
       );
 
-    if (
-      !normalizedItem ||
-      currentState
-        .inventory
-        .length >=
-        CONFIG.MAX_INVENTORY
-    ) {
+    if (!normalizedItem) {
       return false;
     }
+
+    const usedIds = new Set();
+
+    currentState
+      .inventory
+      .forEach(function (
+        inventoryItem
+      ) {
+        usedIds.add(
+          inventoryItem.id
+        );
+      });
+
+    Object.keys(
+      Data.ITEM_SLOTS
+    ).forEach(function (slotId) {
+      const equippedItem =
+        currentState
+          .equipment[slotId];
+
+      if (equippedItem) {
+        usedIds.add(
+          equippedItem.id
+        );
+      }
+    });
+
+    ensureUniqueItemId(
+      normalizedItem,
+      usedIds
+    );
 
     normalizedItem.equipped =
       false;
@@ -2195,6 +2511,586 @@
     });
 
     return currentState.recentLoot;
+  }
+
+  function findInventoryItemIndex(
+    itemId
+  ) {
+    return getState()
+      .inventory
+      .findIndex(
+        function (item) {
+          return item.id === itemId;
+        }
+      );
+  }
+
+  function getInventoryItem(itemId) {
+    const index =
+      findInventoryItemIndex(
+        itemId
+      );
+
+    return index >= 0
+      ? getState().inventory[index]
+      : null;
+  }
+
+  function getEquippedItem(slotId) {
+    if (
+      !Object.prototype
+        .hasOwnProperty
+        .call(
+          Data.ITEM_SLOTS,
+          slotId
+        )
+    ) {
+      return null;
+    }
+
+    return (
+      getState()
+        .equipment[slotId] ||
+      null
+    );
+  }
+
+  function findItemById(itemId) {
+    const inventoryItem =
+      getInventoryItem(itemId);
+
+    if (inventoryItem) {
+      return {
+        item: inventoryItem,
+        location: "inventory",
+        slot: inventoryItem.slot
+      };
+    }
+
+    const slotIds =
+      Object.keys(
+        Data.ITEM_SLOTS
+      );
+
+    for (
+      let index = 0;
+      index < slotIds.length;
+      index += 1
+    ) {
+      const slotId =
+        slotIds[index];
+
+      const equippedItem =
+        getState()
+          .equipment[slotId];
+
+      if (
+        equippedItem &&
+        equippedItem.id === itemId
+      ) {
+        return {
+          item: equippedItem,
+          location: "equipment",
+          slot: slotId
+        };
+      }
+    }
+
+    return null;
+  }
+
+  function canEquipItem(item) {
+    if (!item) {
+      return {
+        allowed: false,
+        reason: "item-not-found"
+      };
+    }
+
+    if (
+      !Object.prototype
+        .hasOwnProperty
+        .call(
+          Data.ITEM_SLOTS,
+          item.slot
+        )
+    ) {
+      return {
+        allowed: false,
+        reason: "invalid-slot"
+      };
+    }
+
+    if (
+      item.requiredLevel >
+      getState()
+        .player
+        .level
+    ) {
+      return {
+        allowed: false,
+        reason: "level-too-low",
+
+        requiredLevel:
+          item.requiredLevel
+      };
+    }
+
+    return {
+      allowed: true,
+      reason: null
+    };
+  }
+
+  function equipItem(itemId) {
+    const currentState =
+      getState();
+
+    const inventoryIndex =
+      findInventoryItemIndex(
+        itemId
+      );
+
+    if (inventoryIndex < 0) {
+      return {
+        success: false,
+        reason: "item-not-found"
+      };
+    }
+
+    const candidate =
+      currentState
+        .inventory[
+          inventoryIndex
+        ];
+
+    const permission =
+      canEquipItem(candidate);
+
+    if (!permission.allowed) {
+      return {
+        success: false,
+        reason: permission.reason,
+
+        requiredLevel:
+          permission.requiredLevel ||
+          null,
+
+        item: candidate
+      };
+    }
+
+    const slotId =
+      candidate.slot;
+
+    const previousItem =
+      currentState
+        .equipment[slotId];
+
+    currentState
+      .inventory
+      .splice(
+        inventoryIndex,
+        1
+      );
+
+    candidate.equipped = true;
+
+    currentState
+      .equipment[slotId] =
+      candidate;
+
+    if (previousItem) {
+      previousItem.equipped =
+        false;
+
+      currentState
+        .inventory
+        .unshift(
+          previousItem
+        );
+    }
+
+    applyDerivedPlayerStats(
+      currentState,
+      {
+        preserveHpRatio: true
+      }
+    );
+
+    currentState
+      .statistics
+      .totalItemsEquipped += 1;
+
+    markDirty("equip-item");
+
+    const result = {
+      success: true,
+      slot: slotId,
+      item: candidate,
+
+      previousItem:
+        previousItem,
+
+      playerPower:
+        currentState
+          .player
+          .power,
+
+      equipmentPower:
+        computeEquipmentPower(
+          currentState
+        )
+    };
+
+    emit(
+      "equipment-change",
+      result
+    );
+
+    return result;
+  }
+
+  function unequipItem(slotId) {
+    const currentState =
+      getState();
+
+    if (
+      !Object.prototype
+        .hasOwnProperty
+        .call(
+          Data.ITEM_SLOTS,
+          slotId
+        )
+    ) {
+      return {
+        success: false,
+        reason: "invalid-slot"
+      };
+    }
+
+    const item =
+      currentState
+        .equipment[slotId];
+
+    if (!item) {
+      return {
+        success: false,
+        reason: "slot-empty"
+      };
+    }
+
+    if (
+      currentState
+        .inventory
+        .length >=
+      CONFIG.MAX_INVENTORY
+    ) {
+      return {
+        success: false,
+        reason: "inventory-full"
+      };
+    }
+
+    currentState
+      .equipment[slotId] =
+      null;
+
+    item.equipped = false;
+
+    currentState
+      .inventory
+      .unshift(item);
+
+    applyDerivedPlayerStats(
+      currentState,
+      {
+        preserveHpRatio: true
+      }
+    );
+
+    markDirty("unequip-item");
+
+    const result = {
+      success: true,
+      slot: slotId,
+      item: item,
+
+      playerPower:
+        currentState
+          .player
+          .power,
+
+      equipmentPower:
+        computeEquipmentPower(
+          currentState
+        )
+    };
+
+    emit(
+      "equipment-change",
+      result
+    );
+
+    return result;
+  }
+
+  /*
+   * 각 부위에서 장비 점수가 가장 높은 장비를 선택한다.
+   *
+   * 요구 레벨이 플레이어 레벨보다 높은 장비는 제외한다.
+   */
+  function autoEquipBest() {
+    const currentState =
+      getState();
+
+    const playerLevel =
+      currentState
+        .player
+        .level;
+
+    const allItems =
+      currentState
+        .inventory
+        .slice();
+
+    Object.keys(
+      Data.ITEM_SLOTS
+    ).forEach(function (slotId) {
+      const equippedItem =
+        currentState
+          .equipment[slotId];
+
+      if (equippedItem) {
+        allItems.push(
+          equippedItem
+        );
+      }
+    });
+
+    const selectedIds =
+      new Set();
+
+    const nextEquipment =
+      createEmptyEquipment();
+
+    const changes = [];
+
+    Object.keys(
+      Data.ITEM_SLOTS
+    ).forEach(function (slotId) {
+      const candidates =
+        allItems.filter(
+          function (item) {
+            return (
+              item.slot === slotId &&
+              item.requiredLevel <=
+                playerLevel
+            );
+          }
+        );
+
+      candidates.sort(
+        function (left, right) {
+          const scoreDifference =
+            computeItemScore(right) -
+            computeItemScore(left);
+
+          if (
+            scoreDifference !== 0
+          ) {
+            return scoreDifference;
+          }
+
+          const rarityDifference =
+            Data.getRarityOrder(
+              right.rarity
+            ) -
+            Data.getRarityOrder(
+              left.rarity
+            );
+
+          if (
+            rarityDifference !== 0
+          ) {
+            return rarityDifference;
+          }
+
+          return (
+            right.itemLevel -
+            left.itemLevel
+          );
+        }
+      );
+
+      const bestItem =
+        candidates[0] ||
+        null;
+
+      const previousItem =
+        currentState
+          .equipment[slotId];
+
+      if (bestItem) {
+        bestItem.equipped = true;
+
+        nextEquipment[slotId] =
+          bestItem;
+
+        selectedIds.add(
+          bestItem.id
+        );
+      }
+
+      if (
+        (
+          previousItem &&
+          !bestItem
+        ) ||
+        (
+          !previousItem &&
+          bestItem
+        ) ||
+        (
+          previousItem &&
+          bestItem &&
+          previousItem.id !==
+            bestItem.id
+        )
+      ) {
+        changes.push({
+          slot: slotId,
+
+          previousItem:
+            previousItem ||
+            null,
+
+          item:
+            bestItem ||
+            null
+        });
+      }
+    });
+
+    allItems.forEach(
+      function (item) {
+        item.equipped =
+          selectedIds.has(
+            item.id
+          );
+      }
+    );
+
+    currentState.equipment =
+      nextEquipment;
+
+    currentState.inventory =
+      allItems
+        .filter(
+          function (item) {
+            return !selectedIds.has(
+              item.id
+            );
+          }
+        )
+        .sort(
+          function (left, right) {
+            return (
+              right.acquiredAt -
+              left.acquiredAt
+            );
+          }
+        )
+        .slice(
+          0,
+          CONFIG.MAX_INVENTORY
+        );
+
+    applyDerivedPlayerStats(
+      currentState,
+      {
+        preserveHpRatio: true
+      }
+    );
+
+    if (changes.length > 0) {
+      currentState
+        .statistics
+        .totalItemsEquipped +=
+        changes.length;
+
+      currentState
+        .statistics
+        .totalAutoEquips += 1;
+
+      markDirty("auto-equip");
+    }
+
+    const result = {
+      success: true,
+
+      changed:
+        changes.length > 0,
+
+      changes: changes,
+
+      playerPower:
+        currentState
+          .player
+          .power,
+
+      equipmentPower:
+        computeEquipmentPower(
+          currentState
+        )
+    };
+
+    emit(
+      "auto-equip",
+      result
+    );
+
+    if (changes.length > 0) {
+      emit(
+        "equipment-change",
+        result
+      );
+    }
+
+    return result;
+  }
+
+  function setItemLocked(
+    itemId,
+    locked
+  ) {
+    const located =
+      findItemById(itemId);
+
+    if (!located) {
+      return false;
+    }
+
+    located.item.locked =
+      Boolean(locked);
+
+    markDirty(
+      "set-item-locked"
+    );
+
+    emit("item-lock", {
+      item: located.item,
+      locked: located.item.locked,
+      location: located.location
+    });
+
+    return located.item.locked;
+  }
+
+  function getEquipmentPower() {
+    return computeEquipmentPower(
+      getState()
+    );
   }
 
   function setSpeed(speed) {
@@ -2251,11 +3147,117 @@
     );
   }
 
-  /*
-   * 실제 플레이 시간 누적
-   *
-   * 일시정지 중에는 증가하지 않는다.
-   */
+  function setActiveView(viewId) {
+    const nextView =
+      [
+        "hunt",
+        "equipment"
+      ].includes(viewId)
+        ? viewId
+        : CONFIG.DEFAULT_VIEW;
+
+    getState()
+      .settings
+      .activeView =
+      nextView;
+
+    markDirty(
+      "set-active-view"
+    );
+
+    emit("view-change", {
+      view: nextView
+    });
+
+    return nextView;
+  }
+
+  function setInventorySort(
+    sortId
+  ) {
+    const nextSort =
+      CONFIG
+        .INVENTORY_SORT_OPTIONS
+        .includes(sortId)
+        ? sortId
+        : "newest";
+
+    getState()
+      .settings
+      .inventorySort =
+      nextSort;
+
+    markDirty(
+      "set-inventory-sort"
+    );
+
+    emit(
+      "inventory-settings",
+      {
+        sort: nextSort
+      }
+    );
+
+    return nextSort;
+  }
+
+  function setInventoryFilters(
+    slotId,
+    rarityId
+  ) {
+    const settings =
+      getState().settings;
+
+    settings.inventorySlotFilter =
+      slotId === "all" ||
+      Object.prototype
+        .hasOwnProperty
+        .call(
+          Data.ITEM_SLOTS,
+          slotId
+        )
+        ? slotId
+        : "all";
+
+    settings.inventoryRarityFilter =
+      rarityId === "all" ||
+      Object.prototype
+        .hasOwnProperty
+        .call(
+          Data.RARITIES,
+          rarityId
+        )
+        ? rarityId
+        : "all";
+
+    markDirty(
+      "set-inventory-filters"
+    );
+
+    emit(
+      "inventory-settings",
+      {
+        slot:
+          settings
+            .inventorySlotFilter,
+
+        rarity:
+          settings
+            .inventoryRarityFilter
+      }
+    );
+
+    return {
+      slot:
+        settings
+          .inventorySlotFilter,
+
+      rarity:
+        settings
+          .inventoryRarityFilter
+    };
+  }
+
   function addPlayTime(
     deltaSeconds
   ) {
@@ -2283,10 +3285,6 @@
       .playTimeSeconds +=
       seconds;
 
-    /*
-     * 프레임마다 이벤트를 발생시키지는 않고
-     * 저장 필요 상태만 표시한다.
-     */
     dirty = true;
 
     return getState()
@@ -2294,9 +3292,6 @@
       .playTimeSeconds;
   }
 
-  /*
-   * 향후 통계를 추가할 때 사용할 공통 함수
-   */
   function incrementStatistic(
     key,
     amount
@@ -2334,7 +3329,8 @@
           0,
           0,
           Number.MAX_SAFE_INTEGER
-        ) + increment
+        ) +
+        increment
       );
 
     markDirty(
@@ -2353,9 +3349,6 @@
     return lastError;
   }
 
-  /*
-   * 다른 스크립트에서 사용할 전역 상태 관리자
-   */
   global.GameState = {
     SAVE_VERSION: SAVE_VERSION,
     STORAGE_KEY: STORAGE_KEY,
@@ -2412,9 +3405,48 @@
     setRecentLoot:
       setRecentLoot,
 
+    getInventoryItem:
+      getInventoryItem,
+
+    getEquippedItem:
+      getEquippedItem,
+
+    findItemById:
+      findItemById,
+
+    canEquipItem:
+      canEquipItem,
+
+    equipItem:
+      equipItem,
+
+    unequipItem:
+      unequipItem,
+
+    autoEquipBest:
+      autoEquipBest,
+
+    setItemLocked:
+      setItemLocked,
+
+    getItemScore:
+      computeItemScore,
+
+    getEquipmentPower:
+      getEquipmentPower,
+
     setSpeed: setSpeed,
     setPaused: setPaused,
     togglePaused: togglePaused,
+
+    setActiveView:
+      setActiveView,
+
+    setInventorySort:
+      setInventorySort,
+
+    setInventoryFilters:
+      setInventoryFilters,
 
     addPlayTime:
       addPlayTime,
