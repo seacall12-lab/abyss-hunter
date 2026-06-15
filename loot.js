@@ -19,9 +19,6 @@
 
   const listeners = new Set();
 
-  /*
-   * 장비 등급에 따른 이름 접두사
-   */
   const RARITY_PREFIXES = {
     common: [
       "낡은",
@@ -49,13 +46,10 @@
   };
 
   /*
-   * 장비 슬롯별 기본 능력치 규칙
+   * 슬롯별 기본 능력치 규칙
    *
-   * 무기: 공격력
-   * 투구·갑옷: HP와 방어력
-   * 장갑: 공격력과 치명타 확률
-   * 신발: 방어력과 공격속도
-   * 목걸이: HP와 치명타 피해
+   * 각 장비는 슬롯의 역할이 분명하게 느껴지도록
+   * 서로 다른 기본 능력치를 가진다.
    */
   const SLOT_BASE_STAT_RULES = {
     weapon: [
@@ -143,6 +137,13 @@
     ]
   };
 
+  const SORT_LABELS = {
+    newest: "최신순",
+    score: "점수순",
+    rarity: "등급순",
+    level: "레벨순"
+  };
+
   function clone(value) {
     if (value === undefined) {
       return undefined;
@@ -161,51 +162,39 @@
   ) {
     const numeric = Number(value);
 
-    let result =
-      Number.isFinite(numeric)
-        ? numeric
-        : Number(fallback) || 0;
+    let result = Number.isFinite(numeric)
+      ? numeric
+      : Number(fallback) || 0;
 
     if (Number.isFinite(min)) {
-      result = Math.max(
-        min,
-        result
-      );
+      result = Math.max(min, result);
     }
 
     if (Number.isFinite(max)) {
-      result = Math.min(
-        max,
-        result
-      );
+      result = Math.min(max, result);
     }
 
     return result;
   }
 
   function emit(type, payload) {
-    listeners.forEach(
-      function (listener) {
-        try {
-          listener({
-            type: type,
-            payload: payload || null
-          });
-        } catch (error) {
-          console.error(
-            "GameLoot 이벤트 처리 중 오류가 발생했습니다.",
-            error
-          );
-        }
+    listeners.forEach(function (listener) {
+      try {
+        listener({
+          type: type,
+          payload: payload || null
+        });
+      } catch (error) {
+        console.error(
+          "GameLoot 이벤트 처리 중 오류가 발생했습니다.",
+          error
+        );
       }
-    );
+    });
   }
 
   function subscribe(listener) {
-    if (
-      typeof listener !==
-      "function"
-    ) {
+    if (typeof listener !== "function") {
       return function () {};
     }
 
@@ -232,16 +221,11 @@
     ];
   }
 
-  function roundStatValue(
-    value,
-    type
-  ) {
+  function roundStatValue(value, type) {
     if (type === "ratio") {
-      return (
-        Math.round(
-          value * 1000
-        ) / 1000
-      );
+      return Math.round(
+        value * 1000
+      ) / 1000;
     }
 
     return Math.max(
@@ -263,18 +247,10 @@
 
   /*
    * 일반 몬스터 기본 드롭률은 8%다.
-   *
-   * 웨이브당 0.1%p씩 증가하고
-   * 최대 5%p까지 추가된다.
-   *
-   * 일반 몬스터 최대 드롭률은 13%다.
-   * 보스는 장비를 확정 드롭한다.
+   * 웨이브가 오를수록 최대 5%p까지 증가한다.
    */
-  function calculateDropChance(
-    context
-  ) {
-    const source =
-      context || {};
+  function calculateDropChance(context) {
+    const source = context || {};
 
     if (source.forceDrop) {
       return 1;
@@ -303,21 +279,14 @@
 
     return Data.clamp(
       Data.LOOT.baseDropChance +
-        waveBonus,
+      waveBonus,
       0,
       0.25
     );
   }
 
-  /*
-   * 웨이브가 높아질수록 일반 장비 비율을 낮추고
-   * 희귀 이상 등급의 비율을 조금씩 높인다.
-   */
-  function buildRarityWeights(
-    context
-  ) {
-    const source =
-      context || {};
+  function buildRarityWeights(context) {
+    const source = context || {};
 
     const wave = Math.max(
       1,
@@ -342,23 +311,20 @@
         Data.RARITIES.epic.weight,
 
       legendary:
-        Data.RARITIES
-          .legendary
-          .weight
+        Data.RARITIES.legendary.weight
     };
 
-    const progressionBonus =
-      Math.min(
-        8,
-        Math.floor(
-          (wave - 1) / 5
-        )
-      );
+    const progressionBonus = Math.min(
+      8,
+      Math.floor(
+        (wave - 1) / 5
+      )
+    );
 
     weights.common = Math.max(
       35,
       weights.common -
-        progressionBonus
+      progressionBonus
     );
 
     weights.rare +=
@@ -370,10 +336,6 @@
     weights.legendary +=
       progressionBonus * 0.06;
 
-    /*
-     * 향후 보스전에서는 일반 등급을 크게 줄이고
-     * 영웅·전설 확률을 높인다.
-     */
     if (source.isBoss) {
       weights.common *= 0.18;
       weights.rare *= 1.8;
@@ -412,9 +374,7 @@
     const totalWeight =
       entries.reduce(
         function (sum, entry) {
-          return (
-            sum + entry.weight
-          );
+          return sum + entry.weight;
         },
         0
       );
@@ -444,29 +404,26 @@
   }
 
   /*
-   * 장비 레벨은 플레이어 레벨과 웨이브를 함께 반영한다.
+   * 아이템 레벨은 플레이어 레벨과
+   * 현재 웨이브를 함께 반영한다.
    */
-  function resolveItemLevel(
-    context
-  ) {
-    const source =
-      context || {};
+  function resolveItemLevel(context) {
+    const source = context || {};
 
-    const playerLevel =
-      Math.max(
-        1,
-        Math.floor(
-          finiteNumber(
-            source.playerLevel,
+    const playerLevel = Math.max(
+      1,
+      Math.floor(
+        finiteNumber(
+          source.playerLevel,
 
-            State.getState()
-              .player.level,
+          State.getState()
+            .player.level,
 
-            1,
-            CONFIG.MAX_LEVEL
-          )
+          1,
+          CONFIG.MAX_LEVEL
         )
-      );
+      )
+    );
 
     const wave = Math.max(
       1,
@@ -480,17 +437,15 @@
       )
     );
 
-    const waveLevel =
-      Math.max(
-        1,
-        Math.ceil(wave / 2)
-      );
+    const waveLevel = Math.max(
+      1,
+      Math.ceil(wave / 2)
+    );
 
-    const centerLevel =
-      Math.max(
-        playerLevel,
-        waveLevel
-      );
+    const centerLevel = Math.max(
+      playerLevel,
+      waveLevel
+    );
 
     const levelOffset =
       Data.randomInteger(
@@ -500,8 +455,7 @@
 
     return Data.clamp(
       centerLevel +
-        levelOffset,
-
+      levelOffset,
       1,
       CONFIG.MAX_LEVEL
     );
@@ -573,8 +527,10 @@
   }
 
   /*
-   * 같은 장비에 동일한 랜덤 옵션이 중복되지 않도록
-   * 후보 배열에서 뽑은 옵션을 제거한다.
+   * 동일한 랜덤 옵션이 한 아이템에
+   * 중복되지 않게 생성한다.
+   *
+   * 기본 능력치와 같은 능력치는 허용한다.
    */
   function rollRandomOptions(
     rarityId,
@@ -606,7 +562,7 @@
     while (
       candidates.length > 0 &&
       options.length <
-        optionCount
+      optionCount
     ) {
       const index =
         Data.randomInteger(
@@ -629,13 +585,13 @@
       const rarityMultiplier =
         0.88 +
         rarity.statMultiplier *
-          0.18;
+        0.18;
 
       const value =
         roundStatValue(
           baseValue *
-            levelMultiplier *
-            rarityMultiplier,
+          levelMultiplier *
+          rarityMultiplier,
 
           affix.type
         );
@@ -679,9 +635,6 @@
       .join(" ");
   }
 
-  /*
-   * v0.3에서 판매와 분해 기능에 사용할 가치
-   */
   function calculateItemValues(
     rarityId,
     itemLevel
@@ -699,16 +652,17 @@
       1 +
       rarityIndex * 0.9;
 
-    const sellValue = Math.max(
-      1,
-      Math.round(
-        (
-          8 +
-          itemLevel * 5
-        ) *
-        rarityMultiplier
-      )
-    );
+    const sellValue =
+      Math.max(
+        1,
+        Math.round(
+          (
+            8 +
+            itemLevel * 5
+          ) *
+          rarityMultiplier
+        )
+      );
 
     const salvageValue =
       Math.max(
@@ -729,12 +683,8 @@
     };
   }
 
-  /*
-   * 장비 한 개 생성
-   */
   function generateItem(context) {
-    const source =
-      context || {};
+    const source = context || {};
 
     const slotId =
       Object.prototype
@@ -785,10 +735,10 @@
           1,
 
           itemLevel -
-            Data.randomInteger(
-              0,
-              1
-            )
+          Data.randomInteger(
+            0,
+            1
+          )
         ),
 
       itemLevel: itemLevel,
@@ -804,9 +754,6 @@
           itemLevel
         ),
 
-      /*
-       * 강화 시스템에서 추가되는 능력치
-       */
       bonusStats: {},
 
       randomOptions:
@@ -826,11 +773,11 @@
   }
 
   /*
-   * 몬스터 처치 시 장비 드롭 판정
+   * 몬스터 처치 시 장비 드롭을 판정하고
+   * 획득한 장비를 인벤토리에 저장한다.
    */
   function rollDrop(context) {
-    const source =
-      context || {};
+    const source = context || {};
 
     const dropChance =
       calculateDropChance(
@@ -846,10 +793,8 @@
       const missResult = {
         dropped: false,
         stored: false,
-
         chance: dropChance,
         roll: roll,
-
         item: null,
         reason: "no-drop"
       };
@@ -876,12 +821,16 @@
       stored:
         Boolean(storedItem),
 
-      chance: dropChance,
+      chance:
+        dropChance,
+
       roll: roll,
 
-      item: clone(
-        storedItem || item
-      ),
+      item:
+        clone(
+          storedItem ||
+          item
+        ),
 
       reason:
         storedItem
@@ -901,54 +850,42 @@
   }
 
   /*
-   * v0.2 자동 장착 추천에 사용할 장비 점수
-   *
-   * 현재 전투력 계산과 비슷한 가중치를 사용한다.
+   * 아이템의 기본 능력치, 강화 능력치,
+   * 랜덤 옵션을 하나로 합산한다.
    */
-  function getItemScore(item) {
+  function getItemTotalStats(item) {
+    const totals = {};
+
+    Data.STAT_KEYS.forEach(
+      function (key) {
+        totals[key] = 0;
+      }
+    );
+
     if (
       !item ||
       typeof item !== "object"
     ) {
-      return 0;
+      return totals;
     }
 
-    const weights = {
-      maxHp: 0.18,
-      attack: 5.2,
-      defense: 3.4,
-      attackSpeed: 72,
-      critChance: 420,
-      critDamage: 120,
-      lifesteal: 520,
-      bossDamage: 260,
-      normalDamage: 190,
-      goldBonus: 90
-    };
-
-    let score = 0;
-
-    function addStatMap(
-      statMap
-    ) {
+    function addStatMap(statMap) {
       if (
         !statMap ||
-        typeof statMap !==
-          "object"
+        typeof statMap !== "object"
       ) {
         return;
       }
 
-      Object.keys(weights).forEach(
-        function (stat) {
-          score +=
+      Data.STAT_KEYS.forEach(
+        function (key) {
+          totals[key] +=
             finiteNumber(
-              statMap[stat],
+              statMap[key],
               0,
               -999999999,
               999999999
-            ) *
-            weights[stat];
+            );
         }
       );
     }
@@ -970,27 +907,59 @@
         function (option) {
           if (
             option &&
-            Object.prototype
-              .hasOwnProperty
-              .call(
-                weights,
-                option.stat
-              )
+            Data.STAT_KEYS.includes(
+              option.stat
+            )
           ) {
-            score +=
+            totals[option.stat] +=
               finiteNumber(
                 option.value,
                 0,
                 -999999999,
                 999999999
-              ) *
-              weights[
-                option.stat
-              ];
+              );
           }
         }
       );
     }
+
+    return totals;
+  }
+
+  /*
+   * state.js와 동일한 장비 점수를 사용한다.
+   */
+  function getItemScore(item) {
+    if (
+      !item ||
+      typeof item !== "object"
+    ) {
+      return 0;
+    }
+
+    if (
+      typeof State.getItemScore ===
+      "function"
+    ) {
+      return State.getItemScore(
+        item
+      );
+    }
+
+    const totals =
+      getItemTotalStats(item);
+
+    let score = 0;
+
+    Data.STAT_KEYS.forEach(
+      function (key) {
+        score +=
+          totals[key] *
+          Data
+            .getStatMeta(key)
+            .powerWeight;
+      }
+    );
 
     score +=
       finiteNumber(
@@ -1020,6 +989,10 @@
         equipped
       );
 
+    const difference =
+      candidateScore -
+      equippedScore;
+
     return {
       candidateScore:
         candidateScore,
@@ -1028,20 +1001,50 @@
         equippedScore,
 
       difference:
-        candidateScore -
-        equippedScore,
+        difference,
 
       isUpgrade:
-        candidateScore >
-        equippedScore
+        difference > 0,
+
+      isEqual:
+        difference === 0
     };
   }
 
+  function compareWithEquipped(item) {
+    if (!item) {
+      return compareItems(
+        null,
+        null
+      );
+    }
+
+    const equipped =
+      State.getEquippedItem(
+        item.slot
+      );
+
+    const comparison =
+      compareItems(
+        item,
+        equipped
+      );
+
+    comparison.equippedItem =
+      equipped;
+
+    comparison.slot =
+      item.slot;
+
+    return comparison;
+  }
+
   /*
-   * UI에서 능력치 표시 시 사용한다.
-   *
    * ratio:
    * 0.05 → 5.0%
+   *
+   * flat:
+   * 12.34 → 12.3
    */
   function formatStatValue(
     value,
@@ -1059,7 +1062,8 @@
       return (
         Math.round(
           numeric * 1000
-        ) / 10
+        ) /
+        10
       ).toFixed(1) + "%";
     }
 
@@ -1067,6 +1071,345 @@
       Math.round(
         numeric * 10
       ) / 10
+    );
+  }
+
+  /*
+   * 아이템 상세 화면에서 표시할 기본 능력치 목록
+   */
+  function getBaseStatRows(item) {
+    if (
+      !item ||
+      !item.baseStats
+    ) {
+      return [];
+    }
+
+    return Data.STAT_KEYS
+      .filter(function (key) {
+        return (
+          finiteNumber(
+            item.baseStats[key],
+            0
+          ) !== 0
+        );
+      })
+      .map(function (key) {
+        const meta =
+          Data.getStatMeta(key);
+
+        return {
+          stat: key,
+          name: meta.name,
+
+          value:
+            finiteNumber(
+              item.baseStats[key],
+              0
+            ),
+
+          type:
+            meta.type,
+
+          formattedValue:
+            formatStatValue(
+              item.baseStats[key],
+              meta.type
+            )
+        };
+      });
+  }
+
+  /*
+   * 강화 능력치와 랜덤 옵션 표시 목록
+   */
+  function getBonusStatRows(item) {
+    const rows = [];
+
+    if (
+      item &&
+      item.bonusStats
+    ) {
+      Data.STAT_KEYS.forEach(
+        function (key) {
+          const value =
+            finiteNumber(
+              item.bonusStats[key],
+              0
+            );
+
+          if (value === 0) {
+            return;
+          }
+
+          const meta =
+            Data.getStatMeta(key);
+
+          rows.push({
+            stat: key,
+            name: meta.name,
+            value: value,
+            type: meta.type,
+
+            formattedValue:
+              formatStatValue(
+                value,
+                meta.type
+              ),
+
+            source:
+              "enhancement"
+          });
+        }
+      );
+    }
+
+    if (
+      item &&
+      Array.isArray(
+        item.randomOptions
+      )
+    ) {
+      item.randomOptions.forEach(
+        function (option) {
+          if (!option) {
+            return;
+          }
+
+          const meta =
+            Data.getStatMeta(
+              option.stat
+            );
+
+          const type =
+            option.type ||
+            meta.type;
+
+          rows.push({
+            stat:
+              option.stat,
+
+            name:
+              option.name ||
+              meta.name,
+
+            value:
+              finiteNumber(
+                option.value,
+                0
+              ),
+
+            type: type,
+
+            formattedValue:
+              formatStatValue(
+                option.value,
+                type
+              ),
+
+            source:
+              "random"
+          });
+        }
+      );
+    }
+
+    return rows;
+  }
+
+  /*
+   * 인벤토리 정렬
+   *
+   * newest: 획득 시간
+   * score: 장비 점수
+   * rarity: 장비 등급
+   * level: 아이템 레벨
+   */
+  function sortItems(
+    items,
+    sortId
+  ) {
+    const result =
+      Array.isArray(items)
+        ? items.slice()
+        : [];
+
+    const selectedSort =
+      CONFIG
+        .INVENTORY_SORT_OPTIONS
+        .includes(sortId)
+        ? sortId
+        : "newest";
+
+    result.sort(
+      function (left, right) {
+        if (
+          selectedSort ===
+          "score"
+        ) {
+          const scoreDifference =
+            getItemScore(right) -
+            getItemScore(left);
+
+          if (
+            scoreDifference !== 0
+          ) {
+            return scoreDifference;
+          }
+        }
+
+        if (
+          selectedSort ===
+          "rarity"
+        ) {
+          const rarityDifference =
+            Data.getRarityOrder(
+              right.rarity
+            ) -
+            Data.getRarityOrder(
+              left.rarity
+            );
+
+          if (
+            rarityDifference !== 0
+          ) {
+            return rarityDifference;
+          }
+        }
+
+        if (
+          selectedSort ===
+          "level"
+        ) {
+          const levelDifference =
+            finiteNumber(
+              right.itemLevel,
+              1
+            ) -
+            finiteNumber(
+              left.itemLevel,
+              1
+            );
+
+          if (
+            levelDifference !== 0
+          ) {
+            return levelDifference;
+          }
+        }
+
+        return (
+          finiteNumber(
+            right.acquiredAt,
+            0
+          ) -
+          finiteNumber(
+            left.acquiredAt,
+            0
+          )
+        );
+      }
+    );
+
+    return result;
+  }
+
+  function filterItems(
+    items,
+    slotFilter,
+    rarityFilter
+  ) {
+    const source =
+      Array.isArray(items)
+        ? items
+        : [];
+
+    return source.filter(
+      function (item) {
+        const slotMatches =
+          !slotFilter ||
+          slotFilter === "all" ||
+          item.slot === slotFilter;
+
+        const rarityMatches =
+          !rarityFilter ||
+          rarityFilter === "all" ||
+          item.rarity ===
+            rarityFilter;
+
+        return (
+          slotMatches &&
+          rarityMatches
+        );
+      }
+    );
+  }
+
+  /*
+   * 현재 저장된 인벤토리 설정을 기준으로
+   * UI에서 표시할 장비 배열을 반환한다.
+   */
+  function getVisibleInventory(options) {
+    const settings =
+      State.getState().settings;
+
+    const source =
+      options || {};
+
+    const slotFilter =
+      source.slotFilter ||
+      settings
+        .inventorySlotFilter ||
+      "all";
+
+    const rarityFilter =
+      source.rarityFilter ||
+      settings
+        .inventoryRarityFilter ||
+      "all";
+
+    const sortId =
+      source.sort ||
+      settings.inventorySort ||
+      "newest";
+
+    const filtered =
+      filterItems(
+        State.getState()
+          .inventory,
+
+        slotFilter,
+        rarityFilter
+      );
+
+    return sortItems(
+      filtered,
+      sortId
+    );
+  }
+
+  function getNextSort(sortId) {
+    const options =
+      CONFIG
+        .INVENTORY_SORT_OPTIONS;
+
+    const index =
+      options.indexOf(sortId);
+
+    return options[
+      index < 0
+        ? 0
+        : (
+            index + 1
+          ) %
+          options.length
+    ];
+  }
+
+  function getSortLabel(sortId) {
+    return (
+      SORT_LABELS[sortId] ||
+      SORT_LABELS.newest
     );
   }
 
@@ -1085,13 +1428,40 @@
     rollDrop:
       rollDrop,
 
+    getItemTotalStats:
+      getItemTotalStats,
+
     getItemScore:
       getItemScore,
 
     compareItems:
       compareItems,
 
+    compareWithEquipped:
+      compareWithEquipped,
+
+    getBaseStatRows:
+      getBaseStatRows,
+
+    getBonusStatRows:
+      getBonusStatRows,
+
     formatStatValue:
-      formatStatValue
+      formatStatValue,
+
+    sortItems:
+      sortItems,
+
+    filterItems:
+      filterItems,
+
+    getVisibleInventory:
+      getVisibleInventory,
+
+    getNextSort:
+      getNextSort,
+
+    getSortLabel:
+      getSortLabel
   };
 })(window);
