@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+  >
+  <meta name="theme-color" content="#0b1020">
+  <meta
+    name="description"
+    content="자동 사냥과 장비 파밍을 중심으로 한 모바일 웹 미니 RPG"
+  >
+
+  <title>Abyss Hunter v0.1</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="app" class="app-shell">
+
+    <header class="top-bar panel">
+      <div class="brand-block">
+        <p class="eyebrow">AUTO FARMING RPG</p>
+        <h1>Abyss Hunter</h1>
+      </div>
+
+      <div class="top-actions">
+        <button
+          id="pauseButton"
+          class="icon-button"
+          type="button"
+          aria-label="게임 일시정지"
+          title="일시정지"
+        >
+          <span aria-hidden="true">Ⅱ</span>
+        </button>
+
+        <button
+          id="resetButton"
+          class="icon-button danger"
+          type="button"
+          aria-label="저장 데이터 초기화"
+          title="초기화"
+        >
+          <span aria-hidden="true">↻</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+
+      <section class="player-summary panel" aria-label="캐릭터 정보">
+        <div class="level-emblem">
+          <span>LV</span>
+          <strong id="playerLevel">1</strong>
+        </div>
+
+        <div class="summary-center">
+          <div class="summary-row">
+            <div>
+              <span class="label">전사</span>
+              <strong id="playerPower">전투력 0</strong>
+            </div>
+
+            <div class="currency-chip" aria-label="보유 골드">
+              <span aria-hidden="true">●</span>
+              <strong id="goldAmount">0</strong>
+            </div>
+          </div>
+
+          <div class="progress-group">
+            <div class="bar-labels">
+              <span>경험치</span>
+              <span id="expText">0 / 100</span>
+            </div>
+
+            <div
+              class="progress-bar exp-bar"
+              role="progressbar"
+              aria-label="경험치"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <div id="expFill" class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage-panel panel" aria-label="현재 사냥 지역">
+        <div class="stage-heading">
+          <div>
+            <p id="regionName" class="region-name">초보자의 숲</p>
+            <h2 id="waveText">웨이브 1</h2>
+          </div>
+
+          <div class="kill-counter">
+            <span>누적 처치</span>
+            <strong id="totalKills">0</strong>
+          </div>
+        </div>
+
+        <div id="battlefield" class="battlefield">
+          <canvas
+            id="gameCanvas"
+            width="720"
+            height="720"
+            aria-label="자동 전투 화면"
+          ></canvas>
+
+          <div id="pauseOverlay" class="pause-overlay" hidden>
+            <strong>일시정지</strong>
+            <span>자동 전투가 멈췄습니다.</span>
+          </div>
+
+          <div
+            id="levelUpBanner"
+            class="level-up-banner"
+            aria-live="polite"
+          >
+            LEVEL UP!
+          </div>
+        </div>
+
+        <div class="combat-hud">
+          <article class="combatant-card player-card">
+            <div class="combatant-title">
+              <span>플레이어</span>
+              <strong id="playerName">심연의 전사</strong>
+            </div>
+
+            <div class="bar-labels compact">
+              <span>HP</span>
+              <span id="playerHpText">100 / 100</span>
+            </div>
+
+            <div
+              class="progress-bar hp-bar"
+              role="progressbar"
+              aria-label="플레이어 체력"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="100"
+            >
+              <div id="playerHpFill" class="progress-fill"></div>
+            </div>
+          </article>
+
+          <article class="combatant-card monster-card">
+            <div class="combatant-title">
+              <span id="monsterTypeLabel">일반 몬스터</span>
+              <strong id="monsterName">숲 슬라임</strong>
+            </div>
+
+            <div class="bar-labels compact">
+              <span>HP</span>
+              <span id="monsterHpText">40 / 40</span>
+            </div>
+
+            <div
+              class="progress-bar monster-hp-bar"
+              role="progressbar"
+              aria-label="몬스터 체력"
+              aria-valuemin="0"
+              aria-valuemax="40"
+              aria-valuenow="40"
+            >
+              <div id="monsterHpFill" class="progress-fill"></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="controls-panel panel" aria-label="전투 속도 설정">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">BATTLE SPEED</p>
+            <h2>전투 배속</h2>
+          </div>
+
+          <span
+            id="saveStatus"
+            class="save-status"
+            aria-live="polite"
+          >
+            저장 준비
+          </span>
+        </div>
+
+        <div
+          class="speed-buttons"
+          role="group"
+          aria-label="전투 배속 선택"
+        >
+          <button
+            class="speed-button active"
+            type="button"
+            data-speed="1"
+          >
+            1×
+          </button>
+
+          <button
+            class="speed-button"
+            type="button"
+            data-speed="2"
+          >
+            2×
+          </button>
+
+          <button
+            class="speed-button"
+            type="button"
+            data-speed="3"
+          >
+            3×
+          </button>
+        </div>
+      </section>
+
+      <section class="info-grid">
+
+        <article class="mini-panel panel">
+          <div class="mini-panel-heading">
+            <h2>전투 능력치</h2>
+            <span>기본 성장</span>
+          </div>
+
+          <dl class="stat-list">
+            <div>
+              <dt>공격력</dt>
+              <dd id="attackStat">0</dd>
+            </div>
+
+            <div>
+              <dt>방어력</dt>
+              <dd id="defenseStat">0</dd>
+            </div>
+
+            <div>
+              <dt>공격속도</dt>
+              <dd id="attackSpeedStat">0.00</dd>
+            </div>
+
+            <div>
+              <dt>치명타</dt>
+              <dd id="critStat">0%</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="mini-panel panel">
+          <div class="mini-panel-heading">
+            <h2>최근 전리품</h2>
+            <span>v0.2 연결 예정</span>
+          </div>
+
+          <div id="lootPreview" class="loot-preview empty">
+            <span class="loot-orb" aria-hidden="true"></span>
+
+            <div>
+              <strong>드롭 없음</strong>
+              <p>
+                낮은 확률로 장비 흔적을 발견할 수 있습니다.
+              </p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section
+        class="battle-log-panel panel"
+        aria-label="전투 기록"
+      >
+        <div class="mini-panel-heading">
+          <h2>전투 기록</h2>
+
+          <button
+            id="clearLogButton"
+            class="text-button"
+            type="button"
+          >
+            기록 비우기
+          </button>
+        </div>
+
+        <ol
+          id="battleLog"
+          class="battle-log"
+          aria-live="polite"
+        ></ol>
+      </section>
+
+    </main>
+
+    <footer class="footer-note">
+      <span>Abyss Hunter v0.1</span>
+      <span>자동 저장 · localStorage</span>
+    </footer>
+  </div>
+
+  <noscript>
+    <div class="noscript-warning">
+      이 게임은 JavaScript를 사용합니다.
+      브라우저 설정에서 JavaScript를 활성화해 주세요.
+    </div>
+  </noscript>
+
+  <!-- 데이터 → 상태 → 전투 → 전리품 → UI → 실행 -->
+  <script src="data.js"></script>
+  <script src="state.js"></script>
+  <script src="combat.js"></script>
+  <script src="loot.js"></script>
+  <script src="ui.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
