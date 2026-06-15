@@ -2,8 +2,8 @@
   "use strict";
 
   const CONFIG = {
-    GAME_VERSION: "0.1.0",
-    SAVE_VERSION: 1,
+    GAME_VERSION: "0.2.0",
+    SAVE_VERSION: 2,
     STORAGE_KEY: "abyssHunter.save",
 
     AUTOSAVE_INTERVAL_MS: 5000,
@@ -18,14 +18,21 @@
 
     MAX_LEVEL: 999,
     MAX_INVENTORY: 120,
-    MAX_BATTLE_LOGS: 50
+    MAX_BATTLE_LOGS: 50,
+
+    DEFAULT_VIEW: "hunt",
+
+    INVENTORY_SORT_OPTIONS: [
+      "newest",
+      "score",
+      "rarity",
+      "level"
+    ]
   };
 
   /*
    * 플레이어 기본 데이터
-   *
    * attackSpeed는 초당 공격 횟수다.
-   * critDamage 1.6은 치명타 발생 시 기본 피해의 160%라는 의미다.
    */
   const PLAYER = {
     id: "warrior",
@@ -60,9 +67,6 @@
     }
   };
 
-  /*
-   * 초보자의 숲 일반 몬스터 3종
-   */
   const MONSTERS = {
     forestSlime: {
       id: "forestSlime",
@@ -125,12 +129,6 @@
     }
   };
 
-  /*
-   * 지역 데이터
-   *
-   * v0.1에서는 초보자의 숲만 실제로 사용한다.
-   * 버려진 광산은 이후 지역 확장을 위한 구조 예시다.
-   */
   const REGIONS = [
     {
       id: "beginnerForest",
@@ -177,50 +175,57 @@
     }
   ];
 
-  /*
-   * 장비 슬롯
-   */
   const ITEM_SLOTS = {
     weapon: {
       id: "weapon",
-      name: "무기"
+      name: "무기",
+      icon: "⚔",
+      order: 1
     },
 
     helmet: {
       id: "helmet",
-      name: "투구"
+      name: "투구",
+      icon: "◉",
+      order: 2
     },
 
     armor: {
       id: "armor",
-      name: "갑옷"
+      name: "갑옷",
+      icon: "◇",
+      order: 3
     },
 
     gloves: {
       id: "gloves",
-      name: "장갑"
+      name: "장갑",
+      icon: "✦",
+      order: 4
     },
 
     boots: {
       id: "boots",
-      name: "신발"
+      name: "신발",
+      icon: "▲",
+      order: 5
     },
 
     necklace: {
       id: "necklace",
-      name: "목걸이"
+      name: "목걸이",
+      icon: "◆",
+      order: 6
     }
   };
 
-  /*
-   * 장비 등급
-   */
   const RARITIES = {
     common: {
       id: "common",
       name: "일반",
       color: "#aab2c0",
       glow: "rgba(170, 178, 192, 0.24)",
+      order: 1,
       weight: 70,
       statMultiplier: 1,
       optionCount: [0, 1]
@@ -231,6 +236,7 @@
       name: "희귀",
       color: "#4b8eff",
       glow: "rgba(75, 142, 255, 0.34)",
+      order: 2,
       weight: 23,
       statMultiplier: 1.22,
       optionCount: [1, 2]
@@ -241,6 +247,7 @@
       name: "영웅",
       color: "#af58ff",
       glow: "rgba(175, 88, 255, 0.38)",
+      order: 3,
       weight: 6,
       statMultiplier: 1.52,
       optionCount: [2, 3]
@@ -251,17 +258,13 @@
       name: "전설",
       color: "#ff993d",
       glow: "rgba(255, 153, 61, 0.45)",
+      order: 4,
       weight: 1,
       statMultiplier: 1.95,
       optionCount: [3, 4]
     }
   };
 
-  /*
-   * 장비 이름 후보
-   *
-   * v0.1 loot.js에서 낮은 확률로 장비를 생성할 때 사용한다.
-   */
   const ITEM_BASE_NAMES = {
     weapon: [
       "낡은 장검",
@@ -301,8 +304,6 @@
   };
 
   /*
-   * 랜덤 옵션 후보
-   *
    * ratio 유형은 소수 값으로 저장한다.
    * 예: 0.03 = 3%
    */
@@ -389,12 +390,7 @@
   ];
 
   const LOOT = {
-    /*
-     * 몬스터 처치 시 기본 장비 드롭 확률 8%
-     */
     baseDropChance: 0.08,
-
-    previewOnlyInVersion: "0.1.0",
 
     slots: Object.keys(ITEM_SLOTS),
 
@@ -406,9 +402,6 @@
     ]
   };
 
-  /*
-   * 장비가 영향을 줄 수 있는 능력치 목록
-   */
   const STAT_KEYS = [
     "maxHp",
     "attack",
@@ -421,6 +414,71 @@
     "normalDamage",
     "goldBonus"
   ];
+
+  /*
+   * 능력치 표시와 아이템 점수 계산에 사용하는 공통 정보
+   */
+  const STAT_META = {
+    maxHp: {
+      name: "최대 HP",
+      type: "flat",
+      powerWeight: 0.18
+    },
+
+    attack: {
+      name: "공격력",
+      type: "flat",
+      powerWeight: 5.2
+    },
+
+    defense: {
+      name: "방어력",
+      type: "flat",
+      powerWeight: 3.4
+    },
+
+    attackSpeed: {
+      name: "공격속도",
+      type: "ratio",
+      powerWeight: 72
+    },
+
+    critChance: {
+      name: "치명타 확률",
+      type: "ratio",
+      powerWeight: 420
+    },
+
+    critDamage: {
+      name: "치명타 피해",
+      type: "ratio",
+      powerWeight: 120
+    },
+
+    lifesteal: {
+      name: "생명력 흡수",
+      type: "ratio",
+      powerWeight: 520
+    },
+
+    bossDamage: {
+      name: "보스 피해",
+      type: "ratio",
+      powerWeight: 260
+    },
+
+    normalDamage: {
+      name: "일반 몬스터 피해",
+      type: "ratio",
+      powerWeight: 190
+    },
+
+    goldBonus: {
+      name: "골드 획득량",
+      type: "ratio",
+      powerWeight: 90
+    }
+  };
 
   function clamp(value, min, max) {
     const numericValue = Number(value);
@@ -453,13 +511,6 @@
     ) + safeMin;
   }
 
-  /*
-   * 현재 레벨에서 다음 레벨로 가기 위해 필요한 경험치
-   *
-   * 1레벨: 100
-   * 2레벨: 약 146
-   * 3레벨: 약 202
-   */
   function getRequiredExp(level) {
     const safeLevel = clamp(
       Math.floor(level),
@@ -472,11 +523,6 @@
     );
   }
 
-  /*
-   * 레벨에 따른 플레이어 기본 능력치 계산
-   *
-   * 장비 능력치는 state.js에서 별도로 합산한다.
-   */
   function getPlayerBaseStats(level) {
     const safeLevel = clamp(
       Math.floor(level),
@@ -547,9 +593,6 @@
       MONSTERS.forestSlime;
   }
 
-  /*
-   * 웨이브가 오를수록 몬스터 능력치와 보상이 증가한다.
-   */
   function getWaveScaling(wave) {
     const safeWave = Math.max(
       1,
@@ -582,9 +625,6 @@
     };
   }
 
-  /*
-   * 현재 지역과 웨이브에 맞는 몬스터 인스턴스 생성
-   */
   function buildMonster(
     regionId,
     wave,
@@ -622,9 +662,6 @@
     const scaling =
       getWaveScaling(safeWave);
 
-    /*
-     * 같은 몬스터라도 HP와 공격력에 약간의 차이를 둔다.
-     */
     const variation =
       randomRange(0.96, 1.04);
 
@@ -703,6 +740,7 @@
 
       attack: attack,
       defense: defense,
+
       attackInterval: Math.max(
         0.45,
         template.attackInterval
@@ -731,9 +769,18 @@
       RARITIES.common;
   }
 
-  /*
-   * 다른 스크립트에서 사용할 전역 게임 데이터
-   */
+  function getStatMeta(statKey) {
+    return STAT_META[statKey] || {
+      name: statKey,
+      type: "flat",
+      powerWeight: 0
+    };
+  }
+
+  function getRarityOrder(rarityId) {
+    return getRarity(rarityId).order || 0;
+  }
+
   global.GameData = {
     CONFIG: CONFIG,
     PLAYER: PLAYER,
@@ -745,7 +792,9 @@
     ITEM_BASE_NAMES: ITEM_BASE_NAMES,
     ITEM_AFFIXES: ITEM_AFFIXES,
     LOOT: LOOT,
+
     STAT_KEYS: STAT_KEYS,
+    STAT_META: STAT_META,
 
     clamp: clamp,
     randomRange: randomRange,
@@ -760,6 +809,8 @@
     buildMonster: buildMonster,
 
     getItemSlot: getItemSlot,
-    getRarity: getRarity
+    getRarity: getRarity,
+    getStatMeta: getStatMeta,
+    getRarityOrder: getRarityOrder
   };
 })(window);
