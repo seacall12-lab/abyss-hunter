@@ -1,0 +1,358 @@
+:root {
+  color-scheme: dark;
+  --bg: #070b12;
+  --panel: rgba(18, 27, 44, 0.96);
+  --panel-soft: rgba(25, 37, 60, 0.9);
+  --line: rgba(175, 193, 225, 0.16);
+  --line-strong: rgba(175, 193, 225, 0.34);
+  --text: #f4f7ff;
+  --muted: #9aa7bd;
+  --accent: #66d9ef;
+  --accent-strong: #43a7ff;
+  --gold: #ffd36a;
+  --stone: #ad92ff;
+  --danger: #ff6f79;
+  --success: #65df9a;
+  --warning: #ffb85c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background:
+    linear-gradient(180deg, #07101c 0%, #090c13 56%, #05070c 100%);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+  overscroll-behavior: none;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.app-shell {
+  width: min(100%, 560px);
+  height: 100vh;
+  height: 100dvh;
+  margin: 0 auto;
+  padding: max(8px, env(safe-area-inset-top)) 10px 86px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+}
+
+.top-bar {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 20;
+  backdrop-filter: blur(12px);
+}
+
+.brand-block h1,
+.stage-heading h2,
+.section-title-row h2,
+.mini-panel-heading h2,
+.equipment-header h2,
+.inventory-header h2,
+.forge-panel-heading h2,
+.boss-select-header h2,
+.boss-battle-heading h2 {
+  margin: 0;
+  line-height: 1.1;
+}
+
+.brand-block h1 {
+  font-size: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.top-currencies,
+.top-actions,
+.forge-currency-list,
+.speed-buttons,
+.item-utility-actions,
+.item-detail-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.currency-chip,
+.forge-currency-list > div {
+  display: grid;
+  gap: 2px;
+  min-width: 66px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(8, 12, 22, 0.62);
+}
+
+.currency-chip span,
+.forge-currency-list span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.gold-chip strong {
+  color: var(--gold);
+}
+
+.stone-chip strong {
+  color: var(--stone);
+}
+
+.icon-button,
+.text-button,
+.text-danger-button,
+.primary-button,
+.secondary-button,
+.danger-button,
+.speed-button,
+.forge-sub-tab,
+.view-tab,
+.boss-start-button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(27, 39, 64, 0.96);
+  min-height: 40px;
+  padding: 0 12px;
+  font-weight: 800;
+}
+
+.icon-button {
+  width: 40px;
+  padding: 0;
+}
+
+.danger,
+.danger-button,
+.text-danger-button {
+  color: #fff;
+  border-color: rgba(255, 111, 121, 0.44);
+  background: rgba(128, 33, 45, 0.85);
+}
+
+.primary-button,
+.boss-start-button {
+  color: #04111e;
+  border-color: transparent;
+  background: linear-gradient(180deg, #7be7ff, #4aa8ff);
+}
+
+.secondary-button,
+.text-button {
+  color: var(--text);
+}
+
+.wide-button {
+  width: 100%;
+}
+
+.main-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.player-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+}
+
+.level-emblem {
+  width: 58px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(102, 217, 239, 0.5);
+  border-radius: 8px;
+  background: rgba(28, 64, 92, 0.62);
+}
+
+.level-emblem span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.level-emblem strong {
+  font-size: 24px;
+}
+
+.summary-center,
+.progress-group {
+  display: grid;
+  gap: 8px;
+}
+
+.summary-row,
+.bar-labels,
+.stage-heading,
+.section-title-row,
+.mini-panel-heading,
+.equipment-header,
+.inventory-header,
+.forge-panel-heading,
+.boss-select-header,
+.boss-battle-heading,
+.combatant-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.label,
+.save-status,
+.bar-labels,
+.muted-note,
+.inventory-capacity {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.save-status.saved {
+  color: var(--success);
+}
+
+.save-status.error {
+  color: var(--danger);
+}
+
+.progress-bar {
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(5, 8, 14, 0.78);
+}
+
+.progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 140ms linear;
+}
+
+.exp-bar .progress-fill {
+  background: linear-gradient(90deg, #66d9ef, #65df9a);
+}
+
+.hp-bar .progress-fill {
+  background: linear-gradient(90deg, #65df9a, #c8ff77);
+}
+
+.monster-hp-bar .progress-fill,
+.boss-hp-bar .progress-fill {
+  background: linear-gradient(90deg, #ff6f79, #ffb85c);
+}
+
+.ultimate-bar .progress-fill {
+  background: linear-gradient(90deg, #ad92ff, #66d9ef);
+}
+
+.view-tabs {
+  position: fixed;
+  left: 50%;
+  right: auto;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  top: auto;
+  width: min(calc(100% - 20px), 540px);
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 6px;
+  z-index: 30;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+}
+
+.view-tab {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  min-height: 54px;
+  padding: 6px 4px;
+  color: var(--muted);
+}
+
+.view-tab.active {
+  color: var(--text);
+  border-color: rgba(102, 217, 239, 0.48);
+  background: rgba(38, 72, 104, 0.76);
+}
+
+.view-tab-icon {
+  font-size: 13px;
+}
+
+.inventory-badge,
+.boss-ready-badge {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #08101b;
+  background: var(--gold);
+  font-size: 11px;
+  font-weight: 900;
+}
