@@ -355,16 +355,40 @@ button:disabled {
 
 .game-view {
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   display: grid;
   gap: 10px;
   padding-bottom: 6px;
   overscroll-behavior: contain;
 }
 
-#huntView.active,
 #bossView.active {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+#bossView.active .boss-select-panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  min-height: 0;
   overflow: hidden;
+}
+
+#bossView.active .boss-select-header {
+  grid-row: 1;
+}
+
+#bossView.active #bossCardList {
+  grid-row: 3;
+  min-height: 0;
+  overflow: auto;
+}
+
+#bossView.active .boss-reward-preview {
+  grid-row: 4;
+}
+
+#bossView.active #bossStartButton {
+  grid-row: 5;
 }
 
 #huntView.active {
@@ -398,21 +422,45 @@ button:disabled {
   margin-top: 6px;
 }
 
-#equipmentView.active,
-#forgeView.active {
-  grid-template-rows: auto minmax(0, 1fr);
+#equipmentView.active {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
 }
 
 #forgeView.active {
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr);
 }
 
-#equipmentView.active .inventory-panel,
-#forgeView.active .forge-inventory,
-#forgeView.active .salvage-panel,
-#forgeView.active .auto-salvage-panel {
+#bossBattlePanel {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
+}
+
+#bossBattlePanel .boss-battle-heading {
+  grid-row: 1;
+}
+
+#bossBattlePanel .boss-battlefield {
+  grid-row: 2;
+  margin-top: 0;
+}
+
+#bossBattlePanel .boss-status-grid {
+  grid-row: 3;
+}
+
+#bossBattlePanel .ultimate-gauge-block {
+  grid-row: 4;
+  min-height: auto;
+}
+
+#bossBattlePanel .boss-skill-grid {
+  grid-row: 5;
+}
+
+#bossBattlePanel #bossRetreatButton {
+  grid-row: 6;
 }
 
 .stage-panel,
@@ -581,10 +629,8 @@ canvas {
 .recent-combat-log {
   display: grid;
   gap: 4px;
-  max-height: 74px;
   margin: 0;
   padding: 0;
-  overflow: hidden;
   list-style: none;
 }
 
@@ -690,11 +736,9 @@ dd {
 .battle-log {
   display: grid;
   gap: 6px;
-  max-height: 210px;
   margin: 10px 0 0;
   padding: 0;
   list-style: none;
-  overflow: auto;
 }
 
 .battle-log li {
@@ -868,7 +912,105 @@ select {
 }
 
 .forge-content-panel[hidden] {
+  display: none !important;
+}
+
+#forgeEnhancePanel {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  min-height: 0;
+  overflow: visible;
+  grid-row: 3;
+}
+
+#forgeEnhancePanel .forge-panel-heading {
+  grid-row: 1;
+}
+
+#forgeEnhancePanel .forge-selected-item {
+  grid-row: 2;
+}
+
+#forgeEnhancePanel .enhance-preview-grid {
+  grid-row: 3;
+}
+
+#forgeEnhancePanel .enhance-cost-box {
+  grid-row: 4;
+}
+
+#forgeEnhancePanel #enhanceButton {
+  grid-row: 5;
   display: none;
+}
+
+#forgeEnhancePanel #enhanceNotice {
+  grid-row: 6;
+  display: none;
+}
+
+#forgeInventoryPanel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  grid-row: 3;
+}
+
+#forgeInventoryPanel .forge-panel-heading {
+  grid-row: 1;
+}
+
+#forgeInventoryPanel #forgeInventoryGrid,
+#forgeInventoryPanel #forgeInventoryEmpty {
+  grid-row: 2;
+  min-height: 0;
+  overflow: auto;
+}
+
+#forgeSalvagePanel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  grid-row: 3;
+}
+
+#forgeSalvagePanel .forge-panel-heading {
+  grid-row: 1;
+}
+
+#forgeSalvagePanel .salvage-summary {
+  grid-row: 2;
+}
+
+#forgeSalvagePanel #salvageInventoryGrid,
+#forgeSalvagePanel #salvageNotice {
+  grid-row: 3;
+  min-height: 0;
+  overflow: auto;
+}
+
+#forgeSalvagePanel #salvageButton {
+  display: none;
+}
+
+#forgeAutoSalvagePanel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+  grid-row: 3;
+}
+
+#forgeAutoSalvagePanel .forge-panel-heading {
+  grid-row: 1;
+}
+
+#forgeAutoSalvagePanel .auto-salvage-options {
+  grid-row: 2;
+  min-height: 0;
+  overflow: auto;
 }
 
 .forge-selected-item {
@@ -932,7 +1074,14 @@ select {
 
 .forge-panel .wide-button,
 .salvage-panel .wide-button {
-  margin-top: 10px;
+  position: fixed;
+  left: 50%;
+  right: auto;
+  bottom: max(72px, calc(72px + env(safe-area-inset-bottom)));
+  width: min(calc(100% - 20px), 540px);
+  transform: translateX(-50%);
+  margin-top: 0;
+  z-index: 25;
 }
 
 .salvage-row {
@@ -1027,6 +1176,7 @@ select {
 
 .boss-status-grid {
   margin-top: 10px;
+  flex-shrink: 0;
 }
 
 .ultimate-gauge-block {
@@ -1103,8 +1253,10 @@ select {
   left: 50%;
   bottom: 0;
   width: min(100%, 560px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   max-height: 88vh;
-  overflow: auto;
+  overflow: hidden;
   transform: translateX(-50%);
   padding: 10px 14px max(18px, env(safe-area-inset-bottom));
   border: 1px solid var(--line);
@@ -1143,6 +1295,30 @@ select {
 .utility-sheet {
   display: grid;
   gap: 10px;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.utility-sheet > :first-child {
+  grid-row: 1;
+}
+
+.utility-sheet .settings-list {
+  grid-row: 2;
+  overflow: auto;
+  min-height: 0;
+}
+
+.utility-sheet .stat-list {
+  grid-row: 2;
+  overflow: auto;
+  min-height: 0;
+}
+
+.utility-sheet ol {
+  grid-row: 2;
+  overflow: auto;
+  min-height: 0;
 }
 
 .sheet-stat-list {
@@ -1150,7 +1326,6 @@ select {
 }
 
 .full-battle-log {
-  max-height: min(58vh, 440px);
 }
 
 .settings-list {
