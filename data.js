@@ -2,38 +2,26 @@
   "use strict";
 
   const CONFIG = {
-    GAME_VERSION: "0.2.0",
-    SAVE_VERSION: 2,
+    GAME_VERSION: "0.4.0",
+    SAVE_VERSION: 4,
     STORAGE_KEY: "abyssHunter.save",
-
     AUTOSAVE_INTERVAL_MS: 5000,
     MAX_DELTA_MS: 100,
-
     MONSTERS_PER_WAVE: 5,
     MONSTER_RESPAWN_DELAY_MS: 650,
     PLAYER_REVIVE_DELAY_MS: 2500,
-
     DEFAULT_SPEED: 1,
     SPEED_OPTIONS: [1, 2, 3],
-
     MAX_LEVEL: 999,
     MAX_INVENTORY: 120,
-    MAX_BATTLE_LOGS: 50,
-
+    MAX_BATTLE_LOGS: 60,
     DEFAULT_VIEW: "hunt",
-
-    INVENTORY_SORT_OPTIONS: [
-      "newest",
-      "score",
-      "rarity",
-      "level"
-    ]
+    VIEW_IDS: ["hunt", "equipment", "forge", "boss"],
+    INVENTORY_SORT_OPTIONS: ["newest", "score", "rarity", "level"],
+    FORGE_SORT_OPTIONS: ["score", "enhancement", "rarity", "level"],
+    MAX_ENHANCEMENT: 15
   };
 
-  /*
-   * 플레이어 기본 데이터
-   * attackSpeed는 초당 공격 횟수다.
-   */
   const PLAYER = {
     id: "warrior",
     name: "심연의 전사",
@@ -72,16 +60,13 @@
       id: "forestSlime",
       name: "숲 슬라임",
       levelOffset: 0,
-
       maxHp: 46,
       attack: 7,
       defense: 1,
       attackInterval: 1.42,
-
       expReward: 18,
       goldMin: 4,
       goldMax: 7,
-
       shape: "slime",
       color: "#70dd8a",
       accentColor: "#baffc5",
@@ -92,16 +77,13 @@
       id: "thornWolf",
       name: "가시늑대",
       levelOffset: 1,
-
       maxHp: 66,
       attack: 10,
       defense: 2,
       attackInterval: 1.12,
-
       expReward: 24,
       goldMin: 6,
       goldMax: 9,
-
       shape: "wolf",
       color: "#9fa8b8",
       accentColor: "#dce2ee",
@@ -112,16 +94,13 @@
       id: "goblinScout",
       name: "고블린 정찰병",
       levelOffset: 2,
-
       maxHp: 82,
       attack: 12,
       defense: 3,
       attackInterval: 1.28,
-
       expReward: 30,
       goldMin: 8,
       goldMax: 12,
-
       shape: "goblin",
       color: "#93c95f",
       accentColor: "#ddf7b9",
@@ -143,6 +122,12 @@
         "goblinScout"
       ],
 
+      bossIds: [
+        "ancientTreant",
+        "thornAlpha",
+        "goblinWarlord"
+      ],
+
       background: {
         skyTop: "#172b46",
         skyBottom: "#0c1729",
@@ -155,14 +140,15 @@
       id: "abandonedMine",
       order: 2,
       name: "버려진 광산",
-      description: "v0.5에서 해금될 예정인 지역",
+      description: "다음 지역 업데이트에서 개방됩니다.",
 
       unlockRequirement: {
         type: "bossClear",
-        regionId: "beginnerForest"
+        bossId: "goblinWarlord"
       },
 
       monsterIds: [],
+      bossIds: [],
 
       background: {
         skyTop: "#252536",
@@ -174,6 +160,182 @@
       disabled: true
     }
   ];
+
+  const BOSSES = {
+    ancientTreant: {
+      id: "ancientTreant",
+      regionId: "beginnerForest",
+      order: 1,
+
+      name: "고대 수호목",
+      subtitle: "초보자의 숲 수호자",
+
+      unlockWave: 10,
+      recommendedPower: 420,
+      timeLimit: 60,
+
+      maxHp: 2650,
+      attack: 31,
+      defense: 8,
+      attackInterval: 1.7,
+
+      expReward: 250,
+      goldReward: 280,
+      stoneReward: 4,
+
+      shape: "treant",
+      color: "#7eae63",
+      accentColor: "#d5f0a8",
+      auraColor: "rgba(115, 191, 92, 0.32)",
+
+      pattern: {
+        name: "뿌리 강타",
+        interval: 9,
+        firstDelay: 6.5,
+        warningDuration: 2.2,
+        damageMultiplier: 2.65
+      },
+
+      firstClearReward: {
+        gold: 1000,
+        enhancementStone: 20,
+        rarity: "epic"
+      },
+
+      repeatDrop: {
+        minimumRarity: "rare",
+        dropChance: 1
+      }
+    },
+
+    thornAlpha: {
+      id: "thornAlpha",
+      regionId: "beginnerForest",
+      order: 2,
+
+      name: "가시 우두머리",
+      subtitle: "숲의 포식자",
+
+      unlockWave: 20,
+      recommendedPower: 850,
+      timeLimit: 65,
+
+      maxHp: 6100,
+      attack: 52,
+      defense: 15,
+      attackInterval: 1.35,
+
+      expReward: 520,
+      goldReward: 560,
+      stoneReward: 7,
+
+      shape: "alphaWolf",
+      color: "#a5aec1",
+      accentColor: "#ffcf72",
+      auraColor: "rgba(192, 206, 235, 0.34)",
+
+      pattern: {
+        name: "가시 돌진",
+        interval: 8,
+        firstDelay: 5.5,
+        warningDuration: 1.8,
+        damageMultiplier: 2.9
+      },
+
+      firstClearReward: {
+        gold: 2200,
+        enhancementStone: 35,
+        rarity: "epic"
+      },
+
+      repeatDrop: {
+        minimumRarity: "rare",
+        dropChance: 1
+      }
+    },
+
+    goblinWarlord: {
+      id: "goblinWarlord",
+      regionId: "beginnerForest",
+      order: 3,
+
+      name: "고블린 전쟁군주",
+      subtitle: "숲의 지배자",
+
+      unlockWave: 30,
+      recommendedPower: 1450,
+      timeLimit: 70,
+
+      maxHp: 11800,
+      attack: 78,
+      defense: 24,
+      attackInterval: 1.5,
+
+      expReward: 900,
+      goldReward: 950,
+      stoneReward: 12,
+
+      shape: "warlord",
+      color: "#88bd58",
+      accentColor: "#ff7d65",
+      auraColor: "rgba(213, 75, 62, 0.32)",
+
+      pattern: {
+        name: "파멸의 내려찍기",
+        interval: 7.5,
+        firstDelay: 5,
+        warningDuration: 1.6,
+        damageMultiplier: 3.2
+      },
+
+      firstClearReward: {
+        gold: 4000,
+        enhancementStone: 55,
+        rarity: "legendary"
+      },
+
+      repeatDrop: {
+        minimumRarity: "epic",
+        dropChance: 1
+      }
+    }
+  };
+
+  const BOSS_SKILLS = {
+    smash: {
+      id: "smash",
+      name: "강타",
+      cooldown: 5,
+      damageMultiplier: 2.35,
+      ultimateGain: 22
+    },
+
+    guard: {
+      id: "guard",
+      name: "방어",
+      cooldown: 6,
+      duration: 2.2,
+      damageReduction: 0.76
+    },
+
+    potion: {
+      id: "potion",
+      name: "회복 물약",
+      cooldown: 4,
+      uses: 3,
+      healRatio: 0.35
+    },
+
+    ultimate: {
+      id: "ultimate",
+      name: "심연 참격",
+      requiredGauge: 100,
+      damageMultiplier: 6.5
+    },
+
+    basicAttackGaugeGain: 5,
+    damageTakenGaugeGain: 0.12
+  };
 
   const ITEM_SLOTS = {
     weapon: {
@@ -228,7 +390,8 @@
       order: 1,
       weight: 70,
       statMultiplier: 1,
-      optionCount: [0, 1]
+      optionCount: [0, 1],
+      salvageMultiplier: 1
     },
 
     rare: {
@@ -239,7 +402,8 @@
       order: 2,
       weight: 23,
       statMultiplier: 1.22,
-      optionCount: [1, 2]
+      optionCount: [1, 2],
+      salvageMultiplier: 2.2
     },
 
     epic: {
@@ -250,7 +414,8 @@
       order: 3,
       weight: 6,
       statMultiplier: 1.52,
-      optionCount: [2, 3]
+      optionCount: [2, 3],
+      salvageMultiplier: 5
     },
 
     legendary: {
@@ -261,7 +426,8 @@
       order: 4,
       weight: 1,
       statMultiplier: 1.95,
-      optionCount: [3, 4]
+      optionCount: [3, 4],
+      salvageMultiplier: 12
     }
   };
 
@@ -303,10 +469,6 @@
     ]
   };
 
-  /*
-   * ratio 유형은 소수 값으로 저장한다.
-   * 예: 0.03 = 3%
-   */
   const ITEM_AFFIXES = [
     {
       stat: "attack",
@@ -391,7 +553,6 @@
 
   const LOOT = {
     baseDropChance: 0.08,
-
     slots: Object.keys(ITEM_SLOTS),
 
     rarityOrder: [
@@ -400,6 +561,33 @@
       "epic",
       "legendary"
     ]
+  };
+
+  const ENHANCEMENT = {
+    maxLevel: CONFIG.MAX_ENHANCEMENT,
+
+    successRates: [
+      1,
+      1,
+      1,
+      0.95,
+      0.9,
+      0.82,
+      0.72,
+      0.62,
+      0.52,
+      0.42,
+      0.33,
+      0.25,
+      0.18,
+      0.12,
+      0.08
+    ],
+
+    goldBase: 55,
+    stoneBase: 1,
+    perLevelStatRate: 0.075,
+    highLevelBonusRate: 0.025
   };
 
   const STAT_KEYS = [
@@ -415,9 +603,6 @@
     "goldBonus"
   ];
 
-  /*
-   * 능력치 표시와 아이템 점수 계산에 사용하는 공통 정보
-   */
   const STAT_META = {
     maxHp: {
       name: "최대 HP",
@@ -481,16 +666,11 @@
   };
 
   function clamp(value, min, max) {
-    const numericValue = Number(value);
+    const number = Number(value);
 
-    if (!Number.isFinite(numericValue)) {
-      return min;
-    }
-
-    return Math.min(
-      max,
-      Math.max(min, numericValue)
-    );
+    return Number.isFinite(number)
+      ? Math.min(max, Math.max(min, number))
+      : min;
   }
 
   function randomRange(min, max) {
@@ -498,13 +678,8 @@
   }
 
   function randomInteger(min, max) {
-    const safeMin = Math.ceil(
-      Math.min(min, max)
-    );
-
-    const safeMax = Math.floor(
-      Math.max(min, max)
-    );
+    const safeMin = Math.ceil(Math.min(min, max));
+    const safeMax = Math.floor(Math.max(min, max));
 
     return Math.floor(
       Math.random() * (safeMax - safeMin + 1)
@@ -530,27 +705,27 @@
       CONFIG.MAX_LEVEL
     );
 
-    const levelOffset = safeLevel - 1;
+    const offset = safeLevel - 1;
     const base = PLAYER.baseStats;
     const growth = PLAYER.growthPerLevel;
 
     return {
       maxHp: Math.round(
         base.maxHp +
-        growth.maxHp * levelOffset
+        growth.maxHp * offset
       ),
 
       attack: Math.round(
         (
           base.attack +
-          growth.attack * levelOffset
+          growth.attack * offset
         ) * 10
       ) / 10,
 
       defense: Math.round(
         (
           base.defense +
-          growth.defense * levelOffset
+          growth.defense * offset
         ) * 10
       ) / 10,
 
@@ -559,7 +734,7 @@
           base.attackSpeed +
           Math.min(
             0.35,
-            Math.floor(levelOffset / 5) * 0.02
+            Math.floor(offset / 5) * 0.02
           )
         ) * 100
       ) / 100,
@@ -569,7 +744,7 @@
           base.critChance +
           Math.min(
             0.07,
-            Math.floor(levelOffset / 10) * 0.01
+            Math.floor(offset / 10) * 0.01
           )
         ) * 1000
       ) / 1000,
@@ -600,28 +775,28 @@
     );
 
     const offset = safeWave - 1;
-    const milestoneBonus = Math.floor(offset / 10);
+    const milestone = Math.floor(offset / 10);
 
     return {
       hp:
         1 +
         offset * 0.18 +
-        milestoneBonus * 0.35,
+        milestone * 0.35,
 
       attack:
         1 +
         offset * 0.12 +
-        milestoneBonus * 0.2,
+        milestone * 0.2,
 
       defense:
         1 +
         offset * 0.08 +
-        milestoneBonus * 0.14,
+        milestone * 0.14,
 
       reward:
         1 +
         offset * 0.1 +
-        milestoneBonus * 0.15
+        milestone * 0.15
     };
   }
 
@@ -633,7 +808,7 @@
     const region = getRegion(regionId);
 
     const monsterIds =
-      region.monsterIds.length > 0
+      region.monsterIds.length
         ? region.monsterIds
         : REGIONS[0].monsterIds;
 
@@ -642,22 +817,21 @@
       Math.floor(Number(wave) || 1)
     );
 
-    const safeSpawnIndex = Math.max(
+    const safeIndex = Math.max(
       0,
       Math.floor(Number(spawnIndex) || 0)
     );
 
-    const monsterId =
-      monsterIds[
-        (
-          safeWave -
-          1 +
-          safeSpawnIndex
-        ) % monsterIds.length
-      ];
-
     const template =
-      getMonsterTemplate(monsterId);
+      getMonsterTemplate(
+        monsterIds[
+          (
+            safeWave -
+            1 +
+            safeIndex
+          ) % monsterIds.length
+        ]
+      );
 
     const scaling =
       getWaveScaling(safeWave);
@@ -671,31 +845,6 @@
         template.maxHp *
         scaling.hp *
         variation
-      )
-    );
-
-    const attack = Math.max(
-      1,
-      Math.round(
-        template.attack *
-        scaling.attack *
-        variation
-      )
-    );
-
-    const defense = Math.max(
-      0,
-      Math.round(
-        template.defense *
-        scaling.defense
-      )
-    );
-
-    const expReward = Math.max(
-      1,
-      Math.round(
-        template.expReward *
-        scaling.reward
       )
     );
 
@@ -729,7 +878,8 @@
 
       level: Math.max(
         1,
-        safeWave + template.levelOffset
+        safeWave +
+        template.levelOffset
       ),
 
       wave: safeWave,
@@ -738,15 +888,35 @@
       maxHp: maxHp,
       currentHp: maxHp,
 
-      attack: attack,
-      defense: defense,
+      attack: Math.max(
+        1,
+        Math.round(
+          template.attack *
+          scaling.attack *
+          variation
+        )
+      ),
+
+      defense: Math.max(
+        0,
+        Math.round(
+          template.defense *
+          scaling.defense
+        )
+      ),
 
       attackInterval: Math.max(
         0.45,
         template.attackInterval
       ),
 
-      expReward: expReward,
+      expReward: Math.max(
+        1,
+        Math.round(
+          template.expReward *
+          scaling.reward
+        )
+      ),
 
       goldReward: randomInteger(
         goldMin,
@@ -760,6 +930,69 @@
     };
   }
 
+  function getBoss(bossId) {
+    return BOSSES[bossId] ||
+      BOSSES.ancientTreant;
+  }
+
+  function getBossList(regionId) {
+    return Object.keys(BOSSES)
+      .map(function (id) {
+        return BOSSES[id];
+      })
+      .filter(function (boss) {
+        return !regionId ||
+          boss.regionId === regionId;
+      })
+      .sort(function (left, right) {
+        return left.order - right.order;
+      });
+  }
+
+  function buildBoss(bossId) {
+    const boss = getBoss(bossId);
+
+    return {
+      instanceId: [
+        boss.id,
+        Date.now().toString(36),
+        Math.random()
+          .toString(36)
+          .slice(2, 8)
+      ].join("-"),
+
+      templateId: boss.id,
+      name: boss.name,
+      isBoss: true,
+      level: boss.unlockWave,
+
+      maxHp: boss.maxHp,
+      currentHp: boss.maxHp,
+
+      attack: boss.attack,
+      defense: boss.defense,
+      attackInterval: boss.attackInterval,
+
+      expReward: boss.expReward,
+      goldReward: boss.goldReward,
+      stoneReward: boss.stoneReward,
+
+      timeLimit: boss.timeLimit,
+
+      shape: boss.shape,
+      color: boss.color,
+      accentColor: boss.accentColor,
+      auraColor: boss.auraColor,
+
+      pattern:
+        JSON.parse(
+          JSON.stringify(
+            boss.pattern
+          )
+        )
+    };
+  }
+
   function getItemSlot(slotId) {
     return ITEM_SLOTS[slotId] || null;
   }
@@ -767,6 +1000,10 @@
   function getRarity(rarityId) {
     return RARITIES[rarityId] ||
       RARITIES.common;
+  }
+
+  function getRarityOrder(rarityId) {
+    return getRarity(rarityId).order || 0;
   }
 
   function getStatMeta(statKey) {
@@ -777,8 +1014,191 @@
     };
   }
 
-  function getRarityOrder(rarityId) {
-    return getRarity(rarityId).order || 0;
+  function getEnhancementRate(level) {
+    const safeLevel = clamp(
+      Math.floor(
+        Number(level) || 0
+      ),
+      0,
+      CONFIG.MAX_ENHANCEMENT
+    );
+
+    if (safeLevel <= 0) {
+      return 0;
+    }
+
+    const highLevels =
+      Math.max(
+        0,
+        safeLevel - 10
+      );
+
+    return (
+      safeLevel *
+      ENHANCEMENT.perLevelStatRate +
+      highLevels *
+      ENHANCEMENT.highLevelBonusRate
+    );
+  }
+
+  function getEnhancementInfo(itemOrLevel) {
+    const item =
+      typeof itemOrLevel === "object" &&
+      itemOrLevel
+        ? itemOrLevel
+        : null;
+
+    const currentLevel = clamp(
+      Math.floor(
+        Number(
+          item
+            ? item.enhancement
+            : itemOrLevel
+        ) || 0
+      ),
+      0,
+      CONFIG.MAX_ENHANCEMENT
+    );
+
+    const itemLevel = Math.max(
+      1,
+      Math.floor(
+        Number(
+          item &&
+          item.itemLevel
+        ) || 1
+      )
+    );
+
+    const rarity =
+      getRarity(
+        item &&
+        item.rarity
+      );
+
+    const isMax =
+      currentLevel >=
+      CONFIG.MAX_ENHANCEMENT;
+
+    const nextLevel =
+      Math.min(
+        CONFIG.MAX_ENHANCEMENT,
+        currentLevel + 1
+      );
+
+    const rarityFactor =
+      1 +
+      (
+        rarity.order - 1
+      ) * 0.35;
+
+    return {
+      currentLevel: currentLevel,
+      nextLevel: nextLevel,
+      isMax: isMax,
+
+      successChance:
+        isMax
+          ? 0
+          : ENHANCEMENT
+              .successRates[
+                currentLevel
+              ],
+
+      goldCost:
+        isMax
+          ? 0
+          : Math.round(
+              ENHANCEMENT.goldBase *
+              Math.pow(
+                currentLevel + 1,
+                1.55
+              ) *
+              (
+                1 +
+                itemLevel * 0.05
+              ) *
+              rarityFactor
+            ),
+
+      stoneCost:
+        isMax
+          ? 0
+          : Math.max(
+              1,
+              Math.ceil(
+                ENHANCEMENT.stoneBase *
+                Math.pow(
+                  currentLevel + 1,
+                  1.18
+                ) *
+                rarityFactor
+              )
+            ),
+
+      currentRate:
+        getEnhancementRate(
+          currentLevel
+        ),
+
+      nextRate:
+        getEnhancementRate(
+          nextLevel
+        )
+    };
+  }
+
+  function calculateEnhancementStats(
+    baseStats,
+    enhancementLevel
+  ) {
+    const result = {};
+
+    const rate =
+      getEnhancementRate(
+        enhancementLevel
+      );
+
+    const source =
+      baseStats &&
+      typeof baseStats === "object"
+        ? baseStats
+        : {};
+
+    Object.keys(source).forEach(
+      function (key) {
+        const value =
+          Number(source[key]);
+
+        if (
+          !Number.isFinite(value) ||
+          value === 0
+        ) {
+          return;
+        }
+
+        const meta =
+          getStatMeta(key);
+
+        result[key] =
+          meta.type === "ratio"
+            ? Math.round(
+                value *
+                rate *
+                10000
+              ) / 10000
+            : Math.max(
+                0,
+                Math.round(
+                  value *
+                  rate *
+                  10
+                ) / 10
+              );
+      }
+    );
+
+    return result;
   }
 
   global.GameData = {
@@ -786,12 +1206,15 @@
     PLAYER: PLAYER,
     MONSTERS: MONSTERS,
     REGIONS: REGIONS,
+    BOSSES: BOSSES,
+    BOSS_SKILLS: BOSS_SKILLS,
 
     ITEM_SLOTS: ITEM_SLOTS,
     RARITIES: RARITIES,
     ITEM_BASE_NAMES: ITEM_BASE_NAMES,
     ITEM_AFFIXES: ITEM_AFFIXES,
     LOOT: LOOT,
+    ENHANCEMENT: ENHANCEMENT,
 
     STAT_KEYS: STAT_KEYS,
     STAT_META: STAT_META,
@@ -808,9 +1231,22 @@
     getWaveScaling: getWaveScaling,
     buildMonster: buildMonster,
 
+    getBoss: getBoss,
+    getBossList: getBossList,
+    buildBoss: buildBoss,
+
     getItemSlot: getItemSlot,
     getRarity: getRarity,
+    getRarityOrder: getRarityOrder,
     getStatMeta: getStatMeta,
-    getRarityOrder: getRarityOrder
+
+    getEnhancementRate:
+      getEnhancementRate,
+
+    getEnhancementInfo:
+      getEnhancementInfo,
+
+    calculateEnhancementStats:
+      calculateEnhancementStats
   };
 })(window);
