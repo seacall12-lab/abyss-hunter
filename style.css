@@ -1,5 +1,21 @@
-@import url("styles/base.css?v=0.5.4");
-@import url("styles/views.css?v=0.5.4");
-@import url("styles/systems.css?v=0.5.4");
-@import url("styles/overlays.css?v=0.5.4");
-@import url("styles/mobile.css?v=0.5.4");
+@import url("styles/base.css?v=0.5.5");
+@import url("styles/views.css?v=0.5.5");
+@import url("styles/systems.css?v=0.5.5");
+@import url("styles/overlays.css?v=0.5.5");
+@import url("styles/mobile.css?v=0.5.5");
+
+.startup-error {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 9999;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 116, 116, 0.7);
+  border-radius: 8px;
+  background: rgba(42, 10, 14, 0.94);
+  color: #ffe6e6;
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+}
