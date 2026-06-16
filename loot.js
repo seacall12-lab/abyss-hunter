@@ -12,23 +12,23 @@
   const listeners = new Set();
 
   const SORT_LABELS = {
-    newest: "Newest",
-    score: "Score",
-    rarity: "Rarity",
-    level: "Level"
+    newest: "최신순",
+    score: "점수순",
+    rarity: "등급순",
+    level: "레벨순"
   };
 
   const FORGE_SORT_LABELS = {
-    score: "Score",
-    enhancement: "Enhancement",
-    rarity: "Rarity",
-    level: "Level"
+    score: "점수순",
+    enhancement: "강화순",
+    rarity: "등급순",
+    level: "레벨순"
   };
 
   const BOSS_PREFIXES = {
-    ancientTreant: "Guardian",
-    thornAlpha: "Alpha",
-    goblinWarlord: "Warlord"
+    ancientTreant: "수호목",
+    thornAlpha: "우두머리",
+    goblinWarlord: "전쟁군주"
   };
 
   function clone(value) {
