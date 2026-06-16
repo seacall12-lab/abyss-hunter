@@ -1,3 +1,15 @@
+
+기존 `data.js`, `state.js`, `combat.js`, `loot.js`, `ui.js`, `main.js`는 아직 유지합니다. 이 상태에서도 기존 사냥·장비 기능은 작동하지만, **강화와 보스 탭은 2/3·3/3 적용 후 활성화**됩니다.
+
+백업 파일:
+
+- [index.html](sandbox:/mnt/data/index.html)
+- [style.css](sandbox:/mnt/data/style.css)
+- [v0.4 1/3 ZIP](sandbox:/mnt/data/abyss-hunter-v0.4-1of3.zip)
+
+# index.html
+
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -8,14 +20,14 @@
     content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
   >
 
-  <meta name="theme-color" content="#0b1020">
+  <meta name="theme-color" content="#080d18">
 
   <meta
     name="description"
-    content="자동 사냥과 랜덤 장비 파밍을 중심으로 한 모바일 웹 미니 RPG"
+    content="자동 사냥, 장비 파밍, 강화와 반수동 보스전을 즐기는 모바일 웹 RPG"
   >
 
-  <title>Abyss Hunter v0.2</title>
+  <title>Abyss Hunter v0.4</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -27,6 +39,18 @@
       <div class="brand-block">
         <p class="eyebrow">AUTO FARMING RPG</p>
         <h1>Abyss Hunter</h1>
+      </div>
+
+      <div class="top-currencies" aria-label="보유 재화">
+        <div class="currency-chip gold-chip" title="골드">
+          <span aria-hidden="true">●</span>
+          <strong id="goldAmount">0</strong>
+        </div>
+
+        <div class="currency-chip stone-chip" title="강화석">
+          <span aria-hidden="true">◆</span>
+          <strong id="enhancementStoneAmount">0</strong>
+        </div>
       </div>
 
       <div class="top-actions">
@@ -67,10 +91,13 @@
               <strong id="playerPower">전투력 0</strong>
             </div>
 
-            <div class="currency-chip" aria-label="보유 골드">
-              <span aria-hidden="true">●</span>
-              <strong id="goldAmount">0</strong>
-            </div>
+            <span
+              id="saveStatus"
+              class="save-status"
+              aria-live="polite"
+            >
+              저장 준비
+            </span>
           </div>
 
           <div class="progress-group">
@@ -94,6 +121,7 @@
       </section>
 
       <nav class="view-tabs panel" aria-label="게임 화면 선택">
+
         <button
           class="view-tab active"
           type="button"
@@ -110,7 +138,7 @@
           data-view="equipment"
           aria-pressed="false"
         >
-          <span class="view-tab-icon" aria-hidden="true">◆</span>
+          <span class="view-tab-icon" aria-hidden="true">◇</span>
           <span>장비</span>
 
           <span
@@ -119,6 +147,34 @@
             hidden
           >
             0
+          </span>
+        </button>
+
+        <button
+          class="view-tab"
+          type="button"
+          data-view="forge"
+          aria-pressed="false"
+        >
+          <span class="view-tab-icon" aria-hidden="true">✦</span>
+          <span>강화</span>
+        </button>
+
+        <button
+          class="view-tab boss-tab"
+          type="button"
+          data-view="boss"
+          aria-pressed="false"
+        >
+          <span class="view-tab-icon" aria-hidden="true">♛</span>
+          <span>보스</span>
+
+          <span
+            id="bossReadyBadge"
+            class="boss-ready-badge"
+            hidden
+          >
+            !
           </span>
         </button>
       </nav>
@@ -220,13 +276,7 @@
               <h2>전투 배속</h2>
             </div>
 
-            <span
-              id="saveStatus"
-              class="save-status"
-              aria-live="polite"
-            >
-              저장 준비
-            </span>
+            <span class="muted-note">장비 효과 실시간 반영</span>
           </div>
 
           <div
@@ -297,6 +347,16 @@
                 <dt>생명력 흡수</dt>
                 <dd id="lifestealStat">0%</dd>
               </div>
+
+              <div>
+                <dt>보스 피해</dt>
+                <dd id="bossDamageStat">0%</dd>
+              </div>
+
+              <div>
+                <dt>골드 획득</dt>
+                <dd id="goldBonusStat">0%</dd>
+              </div>
             </dl>
           </article>
 
@@ -310,17 +370,18 @@
               </span>
             </div>
 
-            <div id="lootPreview" class="loot-preview empty">
+            <button
+              id="lootPreview"
+              class="loot-preview empty"
+              type="button"
+            >
               <span class="loot-orb" aria-hidden="true"></span>
 
-              <div>
+              <span class="loot-copy">
                 <strong>드롭 없음</strong>
-
-                <p>
-                  낮은 확률로 장비를 획득할 수 있습니다.
-                </p>
-              </div>
-            </div>
+                <small>낮은 확률로 장비를 획득할 수 있습니다.</small>
+              </span>
+            </button>
           </article>
         </section>
 
@@ -369,7 +430,7 @@
 
             <button
               id="autoEquipButton"
-              class="primary-button auto-equip-button"
+              class="primary-button"
               type="button"
             >
               자동 장착
@@ -457,8 +518,10 @@
           <div class="inventory-header">
             <div>
               <p class="eyebrow">INVENTORY</p>
+
               <h2>
                 보유 장비
+
                 <span class="inventory-capacity">
                   <strong id="inventoryCountLarge">0</strong>
                   /
@@ -518,15 +581,528 @@
           </div>
         </section>
       </div>
+
+      <!-- 강화 및 분해 화면 -->
+      <div
+        id="forgeView"
+        class="game-view"
+        data-view-panel="forge"
+        hidden
+      >
+        <section class="forge-summary panel">
+          <div>
+            <p class="eyebrow">FORGE &amp; SALVAGE</p>
+            <h2>심연의 대장간</h2>
+            <p>장비를 강화하거나 분해해 성장 재료를 확보합니다.</p>
+          </div>
+
+          <div class="forge-currency-list">
+            <div>
+              <span>골드</span>
+              <strong id="forgeGoldAmount">0</strong>
+            </div>
+
+            <div>
+              <span>강화석</span>
+              <strong id="forgeStoneAmount">0</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="forge-panel panel">
+          <div class="forge-panel-heading">
+            <div>
+              <p class="eyebrow">ENHANCE</p>
+              <h2>장비 강화</h2>
+            </div>
+
+            <span id="enhanceLimitText" class="muted-note">최대 +15</span>
+          </div>
+
+          <button
+            id="forgeSelectedItem"
+            class="forge-selected-item empty"
+            type="button"
+          >
+            <span
+              id="forgeItemIcon"
+              class="forge-item-icon"
+              aria-hidden="true"
+            >
+              ＋
+            </span>
+
+            <span class="forge-item-copy">
+              <strong id="forgeItemName">강화할 장비를 선택하세요</strong>
+
+              <small id="forgeItemMeta">
+                인벤토리 또는 장착 장비에서 선택
+              </small>
+            </span>
+
+            <span id="forgeItemLevel" class="enhance-level">+0</span>
+          </button>
+
+          <div class="enhance-preview-grid">
+            <div>
+              <span>현재 점수</span>
+              <strong id="forgeCurrentScore">0</strong>
+            </div>
+
+            <div>
+              <span>강화 후 예상</span>
+              <strong id="forgeNextScore">0</strong>
+            </div>
+
+            <div>
+              <span>성공 확률</span>
+              <strong id="forgeSuccessChance">100%</strong>
+            </div>
+          </div>
+
+          <div class="enhance-cost-box">
+            <div>
+              <span>필요 골드</span>
+              <strong id="forgeGoldCost">0</strong>
+            </div>
+
+            <div>
+              <span>필요 강화석</span>
+              <strong id="forgeStoneCost">0</strong>
+            </div>
+          </div>
+
+          <button
+            id="enhanceButton"
+            class="primary-button wide-button"
+            type="button"
+            disabled
+          >
+            장비 강화
+          </button>
+
+          <p
+            id="enhanceNotice"
+            class="system-notice"
+            aria-live="polite"
+          >
+            강화할 장비를 아래 목록에서 선택하세요.
+          </p>
+        </section>
+
+        <section class="forge-inventory panel">
+          <div class="forge-panel-heading">
+            <div>
+              <p class="eyebrow">SELECT ITEM</p>
+              <h2>강화 장비 선택</h2>
+            </div>
+
+            <button
+              id="forgeSortButton"
+              class="secondary-button"
+              type="button"
+            >
+              점수순
+            </button>
+          </div>
+
+          <div
+            id="forgeInventoryGrid"
+            class="forge-inventory-grid"
+          ></div>
+
+          <div id="forgeInventoryEmpty" class="inventory-empty">
+            <span class="inventory-empty-icon" aria-hidden="true">✦</span>
+            <strong>강화 가능한 장비가 없습니다.</strong>
+            <p>장비를 획득하거나 장착한 뒤 다시 확인하세요.</p>
+          </div>
+        </section>
+
+        <section class="salvage-panel panel">
+          <div class="forge-panel-heading">
+            <div>
+              <p class="eyebrow">SALVAGE</p>
+              <h2>장비 분해</h2>
+            </div>
+
+            <button
+              id="salvageSelectAllButton"
+              class="secondary-button"
+              type="button"
+            >
+              전체 선택
+            </button>
+          </div>
+
+          <div class="salvage-summary">
+            <div>
+              <span>선택 장비</span>
+              <strong id="salvageSelectedCount">0개</strong>
+            </div>
+
+            <div>
+              <span>예상 강화석</span>
+              <strong id="salvageExpectedStones">0</strong>
+            </div>
+
+            <div>
+              <span>예상 골드</span>
+              <strong id="salvageExpectedGold">0</strong>
+            </div>
+          </div>
+
+          <div
+            id="salvageInventoryGrid"
+            class="salvage-inventory-grid"
+          ></div>
+
+          <button
+            id="salvageButton"
+            class="danger-button wide-button"
+            type="button"
+            disabled
+          >
+            선택 장비 분해
+          </button>
+
+          <p
+            id="salvageNotice"
+            class="system-notice"
+            aria-live="polite"
+          >
+            잠금 및 장착 장비는 분해할 수 없습니다.
+          </p>
+        </section>
+
+        <section class="auto-salvage-panel panel">
+          <div class="forge-panel-heading">
+            <div>
+              <p class="eyebrow">AUTO SALVAGE</p>
+              <h2>자동 분해 설정</h2>
+            </div>
+
+            <span class="muted-note">드롭 즉시 적용</span>
+          </div>
+
+          <div class="auto-salvage-options">
+            <label class="toggle-row rarity-common">
+              <span>
+                <strong>일반</strong>
+                <small>일반 장비 자동 분해</small>
+              </span>
+
+              <input
+                id="autoSalvageCommon"
+                type="checkbox"
+                data-rarity="common"
+              >
+
+              <span class="toggle-switch" aria-hidden="true"></span>
+            </label>
+
+            <label class="toggle-row rarity-rare">
+              <span>
+                <strong>희귀</strong>
+                <small>희귀 장비 자동 분해</small>
+              </span>
+
+              <input
+                id="autoSalvageRare"
+                type="checkbox"
+                data-rarity="rare"
+              >
+
+              <span class="toggle-switch" aria-hidden="true"></span>
+            </label>
+
+            <label class="toggle-row rarity-epic">
+              <span>
+                <strong>영웅</strong>
+                <small>영웅 장비 자동 분해</small>
+              </span>
+
+              <input
+                id="autoSalvageEpic"
+                type="checkbox"
+                data-rarity="epic"
+              >
+
+              <span class="toggle-switch" aria-hidden="true"></span>
+            </label>
+
+            <label class="toggle-row rarity-legendary">
+              <span>
+                <strong>전설</strong>
+                <small>전설 장비 자동 분해</small>
+              </span>
+
+              <input
+                id="autoSalvageLegendary"
+                type="checkbox"
+                data-rarity="legendary"
+              >
+
+              <span class="toggle-switch" aria-hidden="true"></span>
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <!-- 반수동 보스전 화면 -->
+      <div
+        id="bossView"
+        class="game-view"
+        data-view-panel="boss"
+        hidden
+      >
+        <section class="boss-select-panel panel">
+          <div class="boss-select-header">
+            <div>
+              <p class="eyebrow">REGION BOSS</p>
+              <h2 id="bossRegionName">초보자의 숲</h2>
+              <p id="bossUnlockText">웨이브 10 도달 시 도전 가능</p>
+            </div>
+
+            <div class="boss-clear-chip">
+              <span>최고 기록</span>
+              <strong id="bossBestTime">--:--</strong>
+            </div>
+          </div>
+
+          <div id="bossCardList" class="boss-card-list">
+            <button
+              class="boss-card selected"
+              type="button"
+              data-boss-id="ancientTreant"
+            >
+              <span class="boss-card-icon" aria-hidden="true">♣</span>
+
+              <span>
+                <small>초보자의 숲</small>
+                <strong>고대 수호목</strong>
+
+                <em>
+                  권장 전투력
+                  <b id="bossRecommendedPower">420</b>
+                </em>
+              </span>
+
+              <span id="bossClearMark" class="boss-clear-mark" hidden>
+                첫 처치 완료
+              </span>
+            </button>
+          </div>
+
+          <div class="boss-reward-preview">
+            <span>최초 처치 보상</span>
+
+            <strong id="bossFirstClearReward">
+              골드 1,000 · 강화석 20 · 영웅 장비
+            </strong>
+          </div>
+
+          <button
+            id="bossStartButton"
+            class="boss-start-button"
+            type="button"
+          >
+            보스 도전
+          </button>
+        </section>
+
+        <section
+          id="bossBattlePanel"
+          class="boss-battle-panel panel"
+          hidden
+        >
+          <div class="boss-battle-heading">
+            <div>
+              <p class="eyebrow">BOSS BATTLE</p>
+              <h2 id="activeBossName">고대 수호목</h2>
+            </div>
+
+            <div class="boss-timer">
+              <span>남은 시간</span>
+              <strong id="bossTimeText">60.0</strong>
+            </div>
+          </div>
+
+          <div class="boss-battlefield">
+            <canvas
+              id="bossCanvas"
+              width="720"
+              height="720"
+              aria-label="보스 전투 화면"
+            ></canvas>
+
+            <div
+              id="bossWarningOverlay"
+              class="boss-warning-overlay"
+              hidden
+            >
+              <span aria-hidden="true">!</span>
+              <strong id="bossWarningText">강력한 공격!</strong>
+              <small>방어 버튼을 누르세요.</small>
+            </div>
+
+            <div
+              id="bossResultOverlay"
+              class="boss-result-overlay"
+              hidden
+            >
+              <p id="bossResultEyebrow" class="eyebrow">BATTLE RESULT</p>
+              <strong id="bossResultTitle">승리</strong>
+              <span id="bossResultDescription">보스를 처치했습니다.</span>
+
+              <button
+                id="bossResultConfirmButton"
+                class="primary-button"
+                type="button"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+
+          <div class="boss-status-grid">
+            <article>
+              <div class="combatant-title">
+                <span>플레이어</span>
+                <strong id="bossPlayerName">심연의 전사</strong>
+              </div>
+
+              <div class="bar-labels compact">
+                <span>HP</span>
+                <span id="bossPlayerHpText">100 / 100</span>
+              </div>
+
+              <div class="progress-bar hp-bar">
+                <div id="bossPlayerHpFill" class="progress-fill"></div>
+              </div>
+            </article>
+
+            <article>
+              <div class="combatant-title">
+                <span>지역 보스</span>
+                <strong id="bossEnemyName">고대 수호목</strong>
+              </div>
+
+              <div class="bar-labels compact">
+                <span>HP</span>
+                <span id="bossEnemyHpText">1,000 / 1,000</span>
+              </div>
+
+              <div class="progress-bar boss-hp-bar">
+                <div id="bossEnemyHpFill" class="progress-fill"></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="ultimate-gauge-block">
+            <div class="bar-labels">
+              <span>궁극기 게이지</span>
+              <span id="ultimateGaugeText">0%</span>
+            </div>
+
+            <div class="progress-bar ultimate-bar">
+              <div id="ultimateGaugeFill" class="progress-fill"></div>
+            </div>
+          </div>
+
+          <div class="boss-skill-grid">
+            <button
+              id="bossSmashButton"
+              class="boss-skill-button smash"
+              type="button"
+            >
+              <span class="skill-icon" aria-hidden="true">⚔</span>
+              <strong>강타</strong>
+              <small id="bossSmashCooldown">준비</small>
+              <span class="cooldown-mask"></span>
+            </button>
+
+            <button
+              id="bossGuardButton"
+              class="boss-skill-button guard"
+              type="button"
+            >
+              <span class="skill-icon" aria-hidden="true">◆</span>
+              <strong>방어</strong>
+              <small id="bossGuardCooldown">준비</small>
+              <span class="cooldown-mask"></span>
+            </button>
+
+            <button
+              id="bossPotionButton"
+              class="boss-skill-button potion"
+              type="button"
+            >
+              <span class="skill-icon" aria-hidden="true">＋</span>
+              <strong>물약</strong>
+              <small id="bossPotionCount">3회</small>
+              <span class="cooldown-mask"></span>
+            </button>
+
+            <button
+              id="bossUltimateButton"
+              class="boss-skill-button ultimate"
+              type="button"
+              disabled
+            >
+              <span class="skill-icon" aria-hidden="true">✦</span>
+              <strong>궁극기</strong>
+              <small id="bossUltimateStatus">게이지 부족</small>
+              <span class="cooldown-mask"></span>
+            </button>
+          </div>
+
+          <button
+            id="bossRetreatButton"
+            class="text-danger-button"
+            type="button"
+          >
+            보스전 포기
+          </button>
+        </section>
+
+        <section class="boss-guide panel">
+          <div class="mini-panel-heading">
+            <h2>보스전 조작</h2>
+            <span>기본 공격 자동</span>
+          </div>
+
+          <div class="boss-guide-grid">
+            <div>
+              <strong>강타</strong>
+              <span>높은 피해와 궁극기 게이지 획득</span>
+            </div>
+
+            <div>
+              <strong>방어</strong>
+              <span>경고 공격의 피해를 크게 감소</span>
+            </div>
+
+            <div>
+              <strong>물약</strong>
+              <span>전투당 제한 횟수만큼 HP 회복</span>
+            </div>
+
+            <div>
+              <strong>궁극기</strong>
+              <span>게이지 100%에서 강력한 일격</span>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
 
     <footer class="footer-note">
-      <span>Abyss Hunter v0.2</span>
+      <span>Abyss Hunter v0.4</span>
       <span>자동 저장 · localStorage</span>
     </footer>
   </div>
 
-  <!-- 아이템 상세 비교창 -->
+  <!-- 아이템 상세 및 장비 액션 바텀시트 -->
   <div
     id="itemDetailOverlay"
     class="item-detail-overlay"
@@ -551,7 +1127,10 @@
         <div>
           <p id="itemDetailRarity" class="item-detail-rarity">일반</p>
           <h2 id="itemDetailName">장비 이름</h2>
-          <p id="itemDetailMeta" class="item-detail-meta">무기 · 아이템 레벨 1</p>
+
+          <p id="itemDetailMeta" class="item-detail-meta">
+            무기 · 아이템 레벨 1
+          </p>
         </div>
 
         <button
@@ -570,8 +1149,28 @@
           <strong id="itemDetailScore">0</strong>
         </div>
 
-        <div id="itemDetailComparison" class="comparison-value neutral">
+        <div
+          id="itemDetailComparison"
+          class="comparison-value neutral"
+        >
           비교 장비 없음
+        </div>
+      </div>
+
+      <div class="item-extra-info">
+        <div>
+          <span>강화</span>
+          <strong id="itemDetailEnhancement">+0</strong>
+        </div>
+
+        <div>
+          <span>잠금</span>
+          <strong id="itemDetailLockStatus">해제</strong>
+        </div>
+
+        <div>
+          <span>분해 가치</span>
+          <strong id="itemDetailSalvageValue">0</strong>
         </div>
       </div>
 
@@ -581,7 +1180,7 @@
       </div>
 
       <div class="detail-section">
-        <h3>랜덤 옵션</h3>
+        <h3>강화 및 랜덤 옵션</h3>
         <dl id="itemOptionList" class="detail-stat-list"></dl>
       </div>
 
@@ -593,6 +1192,24 @@
         <span>현재 장착</span>
         <strong id="equippedItemName">장비 없음</strong>
         <small id="equippedItemScore">장비 점수 0</small>
+      </div>
+
+      <div class="item-utility-actions">
+        <button
+          id="lockItemButton"
+          class="secondary-button"
+          type="button"
+        >
+          장비 잠금
+        </button>
+
+        <button
+          id="goToForgeButton"
+          class="secondary-button"
+          type="button"
+        >
+          강화 화면
+        </button>
       </div>
 
       <div class="item-detail-actions">
@@ -615,6 +1232,26 @@
       </div>
     </section>
   </div>
+
+  <!-- 강화 결과 연출 -->
+  <div
+    id="enhanceResultOverlay"
+    class="enhance-result-overlay"
+    hidden
+  >
+    <div class="enhance-result-card">
+      <span id="enhanceResultIcon" aria-hidden="true">✦</span>
+      <strong id="enhanceResultTitle">강화 성공</strong>
+      <p id="enhanceResultDescription">장비가 +1 강화되었습니다.</p>
+    </div>
+  </div>
+
+  <!-- 공통 토스트 -->
+  <div
+    id="toastContainer"
+    class="toast-container"
+    aria-live="polite"
+  ></div>
 
   <noscript>
     <div class="noscript-warning">
