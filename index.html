@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#080d18">
-  <meta name="description" content="Abyss Hunter mobile web RPG">
+  <meta name="description" content="Abyss Hunter 모바일 웹 RPG">
   <title>Abyss Hunter v0.5</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -12,69 +12,69 @@
   <div id="app" class="app-shell">
     <header class="top-bar panel">
       <div class="brand-block">
-        <p class="eyebrow">AUTO RPG</p>
+        <p class="eyebrow">자동 RPG</p>
         <h1>Abyss Hunter</h1>
       </div>
-      <div class="top-currencies" aria-label="Currencies">
+      <div class="top-currencies" aria-label="재화">
         <div class="currency-chip gold-chip">
-          <span>Gold</span>
+          <span>골드</span>
           <strong id="goldAmount">0</strong>
         </div>
         <div class="currency-chip stone-chip">
-          <span>Stone</span>
+          <span>강화석</span>
           <strong id="enhancementStoneAmount">0</strong>
         </div>
       </div>
       <div class="top-actions">
-        <button id="settingsButton" class="icon-button" type="button" aria-label="Settings">S</button>
-        <button id="pauseButton" class="icon-button" type="button" aria-label="Pause">II</button>
-        <button id="resetButton" class="icon-button danger" type="button" aria-label="Reset">R</button>
+        <button id="settingsButton" class="icon-button" type="button" aria-label="설정">설</button>
+        <button id="pauseButton" class="icon-button" type="button" aria-label="일시정지">정지</button>
+        <button id="resetButton" class="icon-button danger" type="button" aria-label="초기화">초</button>
       </div>
     </header>
 
     <main class="main-content">
       <section class="player-summary panel">
         <div class="level-emblem">
-          <span>LV</span>
+          <span>레벨</span>
           <strong id="playerLevel">1</strong>
         </div>
         <div class="summary-center">
           <div class="summary-row">
             <div>
-              <span class="label">Warrior</span>
-              <strong id="playerPower">Power 0</strong>
+              <span class="label">전사</span>
+              <strong id="playerPower">전투력 0</strong>
             </div>
-            <span id="saveStatus" class="save-status" aria-live="polite">Save ready</span>
+            <span id="saveStatus" class="save-status" aria-live="polite">저장 준비</span>
           </div>
           <div class="progress-group">
             <div class="bar-labels">
-              <span>EXP</span>
+              <span>경험치</span>
               <span id="expText">0 / 100</span>
             </div>
-            <div class="progress-bar exp-bar" role="progressbar" aria-label="Experience">
+            <div class="progress-bar exp-bar" role="progressbar" aria-label="경험치">
               <div id="expFill" class="progress-fill"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <nav class="view-tabs panel" aria-label="Views">
+      <nav class="view-tabs panel" aria-label="화면 탭">
         <button class="view-tab active" type="button" data-view="hunt" aria-pressed="true">
-          <span class="view-tab-icon">H</span>
-          <span>Hunt</span>
+          <span class="view-tab-icon">사</span>
+          <span>사냥</span>
         </button>
         <button class="view-tab" type="button" data-view="equipment" aria-pressed="false">
-          <span class="view-tab-icon">E</span>
-          <span>Gear</span>
+          <span class="view-tab-icon">장</span>
+          <span>장비</span>
           <span id="inventoryBadge" class="inventory-badge" hidden>0</span>
         </button>
         <button class="view-tab" type="button" data-view="forge" aria-pressed="false">
-          <span class="view-tab-icon">F</span>
-          <span>Forge</span>
+          <span class="view-tab-icon">강</span>
+          <span>강화</span>
         </button>
         <button class="view-tab boss-tab" type="button" data-view="boss" aria-pressed="false">
-          <span class="view-tab-icon">B</span>
-          <span>Boss</span>
+          <span class="view-tab-icon">보</span>
+          <span>보스</span>
           <span id="bossReadyBadge" class="boss-ready-badge" hidden>!</span>
         </button>
       </nav>
@@ -83,30 +83,30 @@
         <section class="stage-panel panel">
           <div class="stage-heading">
             <div>
-              <p id="regionName" class="region-name">Beginner Forest</p>
-              <h2 id="waveText">Wave 1</h2>
+              <p id="regionName" class="region-name">초보자의 숲</p>
+              <h2 id="waveText">웨이브 1</h2>
             </div>
             <div class="kill-counter">
-              <span>Kills</span>
+              <span>처치</span>
               <strong id="totalKills">0</strong>
             </div>
           </div>
           <div id="battlefield" class="battlefield">
-            <canvas id="gameCanvas" width="720" height="720" aria-label="Hunt battle canvas"></canvas>
+            <canvas id="gameCanvas" width="720" height="720" aria-label="사냥 전투 화면"></canvas>
             <div id="pauseOverlay" class="pause-overlay" hidden>
-              <strong>Paused</strong>
-              <span>Auto battle is stopped.</span>
+              <strong>일시정지</strong>
+              <span>자동 전투가 멈췄습니다.</span>
             </div>
-            <div id="levelUpBanner" class="level-up-banner" aria-live="polite">LEVEL UP</div>
+            <div id="levelUpBanner" class="level-up-banner" aria-live="polite">레벨업</div>
           </div>
           <div class="combat-hud">
             <article class="combatant-card player-card">
               <div class="combatant-title">
-                <span>Player</span>
-                <strong id="playerName">Abyss Warrior</strong>
+                <span>플레이어</span>
+                <strong id="playerName">심연의 전사</strong>
               </div>
               <div class="bar-labels compact">
-                <span>HP</span>
+                <span>체력</span>
                 <span id="playerHpText">100 / 100</span>
               </div>
               <div class="progress-bar hp-bar">
@@ -115,11 +115,11 @@
             </article>
             <article class="combatant-card monster-card">
               <div class="combatant-title">
-                <span id="monsterTypeLabel">Monster</span>
-                <strong id="monsterName">Forest Slime</strong>
+                <span id="monsterTypeLabel">몬스터</span>
+                <strong id="monsterName">숲 슬라임</strong>
               </div>
               <div class="bar-labels compact">
-                <span>HP</span>
+                <span>체력</span>
                 <span id="monsterHpText">40 / 40</span>
               </div>
               <div class="progress-bar monster-hp-bar">
@@ -132,52 +132,52 @@
         <section class="controls-panel panel">
           <div class="section-title-row">
             <div>
-              <p class="eyebrow">BATTLE SPEED</p>
-              <h2>Speed</h2>
+              <p class="eyebrow">전투 속도</p>
+              <h2>배속</h2>
             </div>
           </div>
-          <div class="speed-buttons" role="group" aria-label="Battle speed">
-            <button class="speed-button active" type="button" data-speed="1">1x</button>
-            <button class="speed-button" type="button" data-speed="2">2x</button>
-            <button class="speed-button" type="button" data-speed="3">3x</button>
+          <div class="speed-buttons" role="group" aria-label="전투 배속">
+            <button class="speed-button active" type="button" data-speed="1">1배</button>
+            <button class="speed-button" type="button" data-speed="2">2배</button>
+            <button class="speed-button" type="button" data-speed="3">3배</button>
           </div>
           <div class="hunt-quick-actions">
-            <button id="statsSheetButton" class="secondary-button" type="button">Stats</button>
-            <button id="logSheetButton" class="secondary-button" type="button">Log</button>
+            <button id="statsSheetButton" class="secondary-button" type="button">능력치</button>
+            <button id="logSheetButton" class="secondary-button" type="button">기록</button>
           </div>
         </section>
 
-        <section class="recent-log-strip panel" aria-label="Recent combat log">
+        <section class="recent-log-strip panel" aria-label="최근 전투 기록">
           <ol id="recentCombatLog" class="recent-combat-log" aria-live="polite"></ol>
         </section>
 
         <section class="info-grid">
           <article class="mini-panel panel">
             <div class="mini-panel-heading">
-              <h2>Stats</h2>
-              <span>Gear included</span>
+              <h2>능력치</h2>
+              <span>장비 포함</span>
             </div>
             <dl class="stat-list">
-              <div><dt>Attack</dt><dd id="attackStat">0</dd></div>
-              <div><dt>Defense</dt><dd id="defenseStat">0</dd></div>
-              <div><dt>Atk Speed</dt><dd id="attackSpeedStat">0.00</dd></div>
-              <div><dt>Crit</dt><dd id="critStat">0%</dd></div>
-              <div><dt>Crit Dmg</dt><dd id="critDamageStat">0%</dd></div>
-              <div><dt>Lifesteal</dt><dd id="lifestealStat">0%</dd></div>
-              <div><dt>Boss Dmg</dt><dd id="bossDamageStat">0%</dd></div>
-              <div><dt>Gold Bonus</dt><dd id="goldBonusStat">0%</dd></div>
+              <div><dt>공격력</dt><dd id="attackStat">0</dd></div>
+              <div><dt>방어력</dt><dd id="defenseStat">0</dd></div>
+              <div><dt>공격 속도</dt><dd id="attackSpeedStat">0.00</dd></div>
+              <div><dt>치명타</dt><dd id="critStat">0%</dd></div>
+              <div><dt>치명타 피해</dt><dd id="critDamageStat">0%</dd></div>
+              <div><dt>생명력 흡수</dt><dd id="lifestealStat">0%</dd></div>
+              <div><dt>보스 피해</dt><dd id="bossDamageStat">0%</dd></div>
+              <div><dt>골드 보너스</dt><dd id="goldBonusStat">0%</dd></div>
             </dl>
           </article>
           <article class="mini-panel panel">
             <div class="mini-panel-heading">
-              <h2>Recent Loot</h2>
-              <span>Inventory <strong id="inventoryCount">0</strong></span>
+              <h2>최근 획득</h2>
+              <span>인벤토리 <strong id="inventoryCount">0</strong></span>
             </div>
             <button id="lootPreview" class="loot-preview empty" type="button">
               <span class="loot-orb"></span>
               <span class="loot-copy">
-                <strong>No loot</strong>
-                <small>Items can drop while hunting.</small>
+                <strong>획득 장비 없음</strong>
+                <small>사냥 중 장비를 얻을 수 있습니다.</small>
               </span>
             </button>
           </article>
@@ -185,8 +185,8 @@
 
         <section class="battle-log-panel panel">
           <div class="mini-panel-heading">
-            <h2>Battle Log</h2>
-            <button id="clearLogButton" class="text-button" type="button">Clear</button>
+            <h2>전투 기록</h2>
+            <button id="clearLogButton" class="text-button" type="button">지우기</button>
           </div>
           <ol id="battleLog" class="battle-log" aria-live="polite"></ol>
         </section>
@@ -196,115 +196,115 @@
         <section class="equipment-overview panel">
           <div class="equipment-header">
             <div>
-              <p class="eyebrow">EQUIPMENT</p>
-              <h2>Equipped Gear</h2>
-              <p class="equipment-power-text">Gear Power <strong id="equipmentPower">0</strong></p>
+              <p class="eyebrow">장비</p>
+              <h2>장착 장비</h2>
+              <p class="equipment-power-text">장비 전투력 <strong id="equipmentPower">0</strong></p>
             </div>
-            <button id="autoEquipButton" class="primary-button" type="button">Auto Equip</button>
+            <button id="autoEquipButton" class="primary-button" type="button">자동 장착</button>
           </div>
           <div id="equipmentGrid" class="equipment-grid">
-            <button class="equipment-slot empty" type="button" data-slot="weapon"><span class="slot-icon">W</span><span class="slot-label">Weapon</span><strong class="equipment-item-name">Empty</strong><span class="equipment-item-meta">Select an item</span></button>
-            <button class="equipment-slot empty" type="button" data-slot="helmet"><span class="slot-icon">H</span><span class="slot-label">Helmet</span><strong class="equipment-item-name">Empty</strong><span class="equipment-item-meta">Select an item</span></button>
-            <button class="equipment-slot empty" type="button" data-slot="armor"><span class="slot-icon">A</span><span class="slot-label">Armor</span><strong class="equipment-item-name">Empty</strong><span class="equipment-item-meta">Select an item</span></button>
-            <button class="equipment-slot empty" type="button" data-slot="gloves"><span class="slot-icon">G</span><span class="slot-label">Gloves</span><strong class="equipment-item-name">Empty</strong><span class="equipment-item-meta">Select an item</span></button>
-            <button class="equipment-slot empty" type="button" data-slot="boots"><span class="slot-icon">B</span><span class="slot-label">Boots</span><strong class="equipment-item-name">Empty</strong><span class="equipment-item-meta">Select an item</span></button>
-            <button class="equipment-slot empty" type="button" data-slot="necklace"><span class="slot-icon">N</span><span class="slot-label">Necklace</span><strong class="equipment-item-name">Empty</strong><span class="equipment-item-meta">Select an item</span></button>
+            <button class="equipment-slot empty" type="button" data-slot="weapon"><span class="slot-icon">무</span><span class="slot-label">무기</span><strong class="equipment-item-name">비어 있음</strong><span class="equipment-item-meta">장비를 선택하세요</span></button>
+            <button class="equipment-slot empty" type="button" data-slot="helmet"><span class="slot-icon">투</span><span class="slot-label">투구</span><strong class="equipment-item-name">비어 있음</strong><span class="equipment-item-meta">장비를 선택하세요</span></button>
+            <button class="equipment-slot empty" type="button" data-slot="armor"><span class="slot-icon">갑</span><span class="slot-label">갑옷</span><strong class="equipment-item-name">비어 있음</strong><span class="equipment-item-meta">장비를 선택하세요</span></button>
+            <button class="equipment-slot empty" type="button" data-slot="gloves"><span class="slot-icon">장</span><span class="slot-label">장갑</span><strong class="equipment-item-name">비어 있음</strong><span class="equipment-item-meta">장비를 선택하세요</span></button>
+            <button class="equipment-slot empty" type="button" data-slot="boots"><span class="slot-icon">신</span><span class="slot-label">신발</span><strong class="equipment-item-name">비어 있음</strong><span class="equipment-item-meta">장비를 선택하세요</span></button>
+            <button class="equipment-slot empty" type="button" data-slot="necklace"><span class="slot-icon">목</span><span class="slot-label">목걸이</span><strong class="equipment-item-name">비어 있음</strong><span class="equipment-item-meta">장비를 선택하세요</span></button>
           </div>
-          <p id="equipmentNotice" class="equipment-notice" aria-live="polite">Select an inventory item to compare and equip.</p>
+          <p id="equipmentNotice" class="equipment-notice" aria-live="polite">인벤토리 장비를 선택해 비교하고 장착하세요.</p>
         </section>
 
         <section class="inventory-panel panel">
           <div class="inventory-header">
             <div>
-              <p class="eyebrow">INVENTORY</p>
-              <h2>Items <span class="inventory-capacity"><strong id="inventoryCountLarge">0</strong> / <span id="inventoryMaximum">120</span></span></h2>
+              <p class="eyebrow">인벤토리</p>
+              <h2>장비 <span class="inventory-capacity"><strong id="inventoryCountLarge">0</strong> / <span id="inventoryMaximum">120</span></span></h2>
             </div>
-            <button id="inventorySortButton" class="secondary-button" type="button" data-sort="newest">Newest</button>
+            <button id="inventorySortButton" class="secondary-button" type="button" data-sort="newest">최신순</button>
           </div>
           <div class="inventory-filters">
-            <label><span>Slot</span><select id="slotFilter"><option value="all">All Slots</option><option value="weapon">Weapon</option><option value="helmet">Helmet</option><option value="armor">Armor</option><option value="gloves">Gloves</option><option value="boots">Boots</option><option value="necklace">Necklace</option></select></label>
-            <label><span>Rarity</span><select id="rarityFilter"><option value="all">All Rarities</option><option value="common">Common</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="legendary">Legendary</option></select></label>
+            <label><span>부위</span><select id="slotFilter"><option value="all">전체 부위</option><option value="weapon">무기</option><option value="helmet">투구</option><option value="armor">갑옷</option><option value="gloves">장갑</option><option value="boots">신발</option><option value="necklace">목걸이</option></select></label>
+            <label><span>등급</span><select id="rarityFilter"><option value="all">전체 등급</option><option value="common">일반</option><option value="rare">희귀</option><option value="epic">영웅</option><option value="legendary">전설</option></select></label>
           </div>
           <div id="inventoryGrid" class="inventory-grid" aria-live="polite"></div>
-          <div id="inventoryEmpty" class="inventory-empty"><strong>No items in inventory.</strong><p>Items can drop from hunting and bosses.</p></div>
+          <div id="inventoryEmpty" class="inventory-empty"><strong>인벤토리에 장비가 없습니다.</strong><p>사냥과 보스전에서 장비를 얻을 수 있습니다.</p></div>
         </section>
       </div>
 
       <div id="forgeView" class="game-view" data-view-panel="forge" hidden>
         <section class="forge-summary panel">
           <div>
-            <p class="eyebrow">FORGE</p>
-            <h2>Enhance and Salvage</h2>
+            <p class="eyebrow">대장간</p>
+            <h2>강화와 분해</h2>
           </div>
           <div class="forge-currency-list">
-            <div><span>Gold</span><strong id="forgeGoldAmount">0</strong></div>
-            <div><span>Stones</span><strong id="forgeStoneAmount">0</strong></div>
+            <div><span>골드</span><strong id="forgeGoldAmount">0</strong></div>
+            <div><span>강화석</span><strong id="forgeStoneAmount">0</strong></div>
           </div>
         </section>
 
-        <div id="forgeSubTabs" class="forge-sub-tabs panel" role="tablist" aria-label="Forge modes">
-          <button class="forge-sub-tab active" type="button" data-forge-panel="enhance" role="tab" aria-selected="true">Enhance</button>
-          <button class="forge-sub-tab" type="button" data-forge-panel="salvage" role="tab" aria-selected="false">Salvage</button>
-          <button class="forge-sub-tab" type="button" data-forge-panel="auto" role="tab" aria-selected="false">Auto</button>
+        <div id="forgeSubTabs" class="forge-sub-tabs panel" role="tablist" aria-label="대장간 모드">
+          <button class="forge-sub-tab active" type="button" data-forge-panel="enhance" role="tab" aria-selected="true">강화</button>
+          <button class="forge-sub-tab" type="button" data-forge-panel="salvage" role="tab" aria-selected="false">분해</button>
+          <button class="forge-sub-tab" type="button" data-forge-panel="auto" role="tab" aria-selected="false">자동</button>
         </div>
 
         <section id="forgeEnhancePanel" class="forge-panel panel forge-content-panel" data-forge-panel="enhance">
           <div class="forge-panel-heading">
-            <div><p class="eyebrow">ENHANCE</p><h2>Equipment Enhance</h2></div>
-            <span id="enhanceLimitText" class="muted-note">Max +15</span>
+            <div><p class="eyebrow">강화</p><h2>장비 강화</h2></div>
+            <span id="enhanceLimitText" class="muted-note">최대 +15</span>
           </div>
           <button id="forgeSelectedItem" class="forge-selected-item empty" type="button">
             <span id="forgeItemIcon" class="forge-item-icon">?</span>
-            <span class="forge-item-copy"><strong id="forgeItemName">Select an item</strong><small id="forgeItemMeta">Choose from inventory or equipped gear.</small></span>
+            <span class="forge-item-copy"><strong id="forgeItemName">장비 선택</strong><small id="forgeItemMeta">인벤토리 또는 장착 장비에서 선택하세요.</small></span>
             <span id="forgeItemLevel" class="enhance-level">+0</span>
           </button>
           <div class="enhance-preview-grid">
-            <div><span>Current Score</span><strong id="forgeCurrentScore">0</strong></div>
-            <div><span>Next Score</span><strong id="forgeNextScore">0</strong></div>
-            <div><span>Success</span><strong id="forgeSuccessChance">100%</strong></div>
+            <div><span>현재 점수</span><strong id="forgeCurrentScore">0</strong></div>
+            <div><span>다음 점수</span><strong id="forgeNextScore">0</strong></div>
+            <div><span>성공률</span><strong id="forgeSuccessChance">100%</strong></div>
           </div>
           <div class="enhance-cost-box">
-            <div><span>Gold Cost</span><strong id="forgeGoldCost">0</strong></div>
-            <div><span>Stone Cost</span><strong id="forgeStoneCost">0</strong></div>
+            <div><span>골드 비용</span><strong id="forgeGoldCost">0</strong></div>
+            <div><span>강화석 비용</span><strong id="forgeStoneCost">0</strong></div>
           </div>
-          <button id="enhanceButton" class="primary-button wide-button" type="button" disabled>Enhance</button>
-          <p id="enhanceNotice" class="system-notice" aria-live="polite">Select an item below.</p>
+          <button id="enhanceButton" class="primary-button wide-button" type="button" disabled>강화</button>
+          <p id="enhanceNotice" class="system-notice" aria-live="polite">아래에서 장비를 선택하세요.</p>
         </section>
 
         <section id="forgeInventoryPanel" class="forge-inventory panel forge-content-panel" data-forge-panel="enhance">
           <div class="forge-panel-heading">
-            <div><p class="eyebrow">SELECT ITEM</p><h2>Forge Items</h2></div>
-            <button id="forgeSortButton" class="secondary-button" type="button">Score</button>
+            <div><p class="eyebrow">장비 선택</p><h2>강화 대상</h2></div>
+            <button id="forgeSortButton" class="secondary-button" type="button">점수순</button>
           </div>
           <div id="forgeInventoryGrid" class="forge-inventory-grid"></div>
-          <div id="forgeInventoryEmpty" class="inventory-empty"><strong>No items available.</strong><p>Earn or equip items first.</p></div>
+          <div id="forgeInventoryEmpty" class="inventory-empty"><strong>강화할 장비가 없습니다.</strong><p>먼저 장비를 획득하거나 장착하세요.</p></div>
         </section>
 
         <section id="forgeSalvagePanel" class="salvage-panel panel forge-content-panel" data-forge-panel="salvage" hidden>
           <div class="forge-panel-heading">
-            <div><p class="eyebrow">SALVAGE</p><h2>Disassemble Items</h2></div>
-            <button id="salvageSelectAllButton" class="secondary-button" type="button">Select All</button>
+            <div><p class="eyebrow">분해</p><h2>장비 분해</h2></div>
+            <button id="salvageSelectAllButton" class="secondary-button" type="button">전체 선택</button>
           </div>
           <div class="salvage-summary">
-            <div><span>Selected</span><strong id="salvageSelectedCount">0</strong></div>
-            <div><span>Stones</span><strong id="salvageExpectedStones">0</strong></div>
-            <div><span>Gold</span><strong id="salvageExpectedGold">0</strong></div>
+            <div><span>선택</span><strong id="salvageSelectedCount">0</strong></div>
+            <div><span>강화석</span><strong id="salvageExpectedStones">0</strong></div>
+            <div><span>골드</span><strong id="salvageExpectedGold">0</strong></div>
           </div>
           <div id="salvageInventoryGrid" class="salvage-inventory-grid"></div>
-          <button id="salvageButton" class="danger-button wide-button" type="button" disabled>Salvage Selected</button>
-          <p id="salvageNotice" class="system-notice" aria-live="polite">Equipped or locked items cannot be salvaged.</p>
+          <button id="salvageButton" class="danger-button wide-button" type="button" disabled>선택 장비 분해</button>
+          <p id="salvageNotice" class="system-notice" aria-live="polite">장착 중이거나 잠긴 장비는 분해할 수 없습니다.</p>
         </section>
 
         <section id="forgeAutoSalvagePanel" class="auto-salvage-panel panel forge-content-panel" data-forge-panel="auto" hidden>
           <div class="forge-panel-heading">
-            <div><p class="eyebrow">AUTO SALVAGE</p><h2>Drop Rules</h2></div>
-            <span class="muted-note">Applies on drop</span>
+            <div><p class="eyebrow">자동 분해</p><h2>획득 규칙</h2></div>
+            <span class="muted-note">드롭 즉시 적용</span>
           </div>
           <div class="auto-salvage-options">
-            <label class="toggle-row rarity-common"><span><strong>Common</strong><small>Salvage immediately</small></span><input id="autoSalvageCommon" type="checkbox" data-rarity="common"><span class="toggle-switch"></span></label>
-            <label class="toggle-row rarity-rare"><span><strong>Rare</strong><small>Salvage immediately</small></span><input id="autoSalvageRare" type="checkbox" data-rarity="rare"><span class="toggle-switch"></span></label>
-            <label class="toggle-row rarity-epic"><span><strong>Epic</strong><small>Salvage immediately</small></span><input id="autoSalvageEpic" type="checkbox" data-rarity="epic"><span class="toggle-switch"></span></label>
-            <label class="toggle-row rarity-legendary"><span><strong>Legendary</strong><small>Salvage immediately</small></span><input id="autoSalvageLegendary" type="checkbox" data-rarity="legendary"><span class="toggle-switch"></span></label>
+            <label class="toggle-row rarity-common"><span><strong>일반</strong><small>획득 즉시 분해</small></span><input id="autoSalvageCommon" type="checkbox" data-rarity="common"><span class="toggle-switch"></span></label>
+            <label class="toggle-row rarity-rare"><span><strong>희귀</strong><small>획득 즉시 분해</small></span><input id="autoSalvageRare" type="checkbox" data-rarity="rare"><span class="toggle-switch"></span></label>
+            <label class="toggle-row rarity-epic"><span><strong>영웅</strong><small>획득 즉시 분해</small></span><input id="autoSalvageEpic" type="checkbox" data-rarity="epic"><span class="toggle-switch"></span></label>
+            <label class="toggle-row rarity-legendary"><span><strong>전설</strong><small>획득 즉시 분해</small></span><input id="autoSalvageLegendary" type="checkbox" data-rarity="legendary"><span class="toggle-switch"></span></label>
           </div>
         </section>
       </div>
@@ -313,93 +313,93 @@
         <section class="boss-select-panel panel">
           <div class="boss-select-header">
             <div>
-              <p class="eyebrow">REGION BOSS</p>
-              <h2 id="bossRegionName">Beginner Forest</h2>
-              <p id="bossUnlockText">Wave 10 unlocks the first boss.</p>
+              <p class="eyebrow">지역 보스</p>
+              <h2 id="bossRegionName">초보자의 숲</h2>
+              <p id="bossUnlockText">웨이브 10에서 첫 보스가 해금됩니다.</p>
             </div>
-            <div class="boss-clear-chip"><span>Best</span><strong id="bossBestTime">--:--</strong></div>
+            <div class="boss-clear-chip"><span>최고</span><strong id="bossBestTime">--:--</strong></div>
           </div>
           <div id="bossCardList" class="boss-card-list"></div>
-          <div class="boss-reward-preview"><span>Reward</span><strong id="bossFirstClearReward">Gold, stones, and gear</strong></div>
-          <button id="bossStartButton" class="boss-start-button" type="button">Start Boss</button>
+          <div class="boss-reward-preview"><span>보상</span><strong id="bossFirstClearReward">골드, 강화석, 장비</strong></div>
+          <button id="bossStartButton" class="boss-start-button" type="button">보스 도전</button>
         </section>
 
         <section id="bossBattlePanel" class="boss-battle-panel panel" hidden>
           <div class="boss-battle-heading">
-            <div><p class="eyebrow">BOSS BATTLE</p><h2 id="activeBossName">Boss</h2></div>
-            <div class="boss-timer"><span>Time</span><strong id="bossTimeText">60.0</strong></div>
+            <div><p class="eyebrow">보스전</p><h2 id="activeBossName">보스</h2></div>
+            <div class="boss-timer"><span>시간</span><strong id="bossTimeText">60.0</strong></div>
           </div>
           <div class="boss-battlefield">
-            <canvas id="bossCanvas" width="720" height="720" aria-label="Boss battle canvas"></canvas>
-            <div id="bossWarningOverlay" class="boss-warning-overlay" hidden><span>!</span><strong id="bossWarningText">Danger attack</strong><small>Guard now.</small></div>
+            <canvas id="bossCanvas" width="720" height="720" aria-label="보스 전투 화면"></canvas>
+            <div id="bossWarningOverlay" class="boss-warning-overlay" hidden><span>!</span><strong id="bossWarningText">위험 공격</strong><small>지금 방어하세요.</small></div>
             <div id="bossResultOverlay" class="boss-result-overlay" hidden>
-              <p id="bossResultEyebrow" class="eyebrow">BATTLE RESULT</p>
-              <strong id="bossResultTitle">Victory</strong>
-              <span id="bossResultDescription">Boss defeated.</span>
-              <button id="bossResultConfirmButton" class="primary-button" type="button">OK</button>
+              <p id="bossResultEyebrow" class="eyebrow">전투 결과</p>
+              <strong id="bossResultTitle">승리</strong>
+              <span id="bossResultDescription">보스를 처치했습니다.</span>
+              <button id="bossResultConfirmButton" class="primary-button" type="button">확인</button>
             </div>
           </div>
           <div class="boss-status-grid">
-            <article><div class="combatant-title"><span>Player</span><strong id="bossPlayerName">Abyss Warrior</strong></div><div class="bar-labels compact"><span>HP</span><span id="bossPlayerHpText">100 / 100</span></div><div class="progress-bar hp-bar"><div id="bossPlayerHpFill" class="progress-fill"></div></div></article>
-            <article><div class="combatant-title"><span>Boss</span><strong id="bossEnemyName">Boss</strong></div><div class="bar-labels compact"><span>HP</span><span id="bossEnemyHpText">1000 / 1000</span></div><div class="progress-bar boss-hp-bar"><div id="bossEnemyHpFill" class="progress-fill"></div></div></article>
+            <article><div class="combatant-title"><span>플레이어</span><strong id="bossPlayerName">심연의 전사</strong></div><div class="bar-labels compact"><span>체력</span><span id="bossPlayerHpText">100 / 100</span></div><div class="progress-bar hp-bar"><div id="bossPlayerHpFill" class="progress-fill"></div></div></article>
+            <article><div class="combatant-title"><span>보스</span><strong id="bossEnemyName">보스</strong></div><div class="bar-labels compact"><span>체력</span><span id="bossEnemyHpText">1000 / 1000</span></div><div class="progress-bar boss-hp-bar"><div id="bossEnemyHpFill" class="progress-fill"></div></div></article>
           </div>
           <div class="ultimate-gauge-block">
-            <div class="bar-labels"><span>Ultimate</span><span id="ultimateGaugeText">0%</span></div>
+            <div class="bar-labels"><span>궁극기</span><span id="ultimateGaugeText">0%</span></div>
             <div class="progress-bar ultimate-bar"><div id="ultimateGaugeFill" class="progress-fill"></div></div>
           </div>
           <div class="boss-skill-grid">
-            <button id="bossSmashButton" class="boss-skill-button smash" type="button"><span class="skill-icon">S</span><strong>Smash</strong><small id="bossSmashCooldown">Ready</small><span class="cooldown-mask"></span></button>
-            <button id="bossGuardButton" class="boss-skill-button guard" type="button"><span class="skill-icon">G</span><strong>Guard</strong><small id="bossGuardCooldown">Ready</small><span class="cooldown-mask"></span></button>
-            <button id="bossPotionButton" class="boss-skill-button potion" type="button"><span class="skill-icon">P</span><strong>Potion</strong><small id="bossPotionCount">3</small><span class="cooldown-mask"></span></button>
-            <button id="bossUltimateButton" class="boss-skill-button ultimate" type="button" disabled><span class="skill-icon">U</span><strong>Ultimate</strong><small id="bossUltimateStatus">Gauge low</small><span class="cooldown-mask"></span></button>
+            <button id="bossSmashButton" class="boss-skill-button smash" type="button"><span class="skill-icon">강</span><strong>강타</strong><small id="bossSmashCooldown">준비</small><span class="cooldown-mask"></span></button>
+            <button id="bossGuardButton" class="boss-skill-button guard" type="button"><span class="skill-icon">방</span><strong>방어</strong><small id="bossGuardCooldown">준비</small><span class="cooldown-mask"></span></button>
+            <button id="bossPotionButton" class="boss-skill-button potion" type="button"><span class="skill-icon">약</span><strong>물약</strong><small id="bossPotionCount">3</small><span class="cooldown-mask"></span></button>
+            <button id="bossUltimateButton" class="boss-skill-button ultimate" type="button" disabled><span class="skill-icon">궁</span><strong>궁극기</strong><small id="bossUltimateStatus">게이지 부족</small><span class="cooldown-mask"></span></button>
           </div>
-          <button id="bossRetreatButton" class="text-danger-button" type="button">Retreat</button>
+          <button id="bossRetreatButton" class="text-danger-button" type="button">포기</button>
         </section>
       </div>
     </main>
 
     <footer class="footer-note">
       <span>Abyss Hunter v0.5</span>
-      <span>localStorage autosave</span>
+      <span>브라우저 자동 저장</span>
     </footer>
   </div>
 
   <div id="statsSheetOverlay" class="utility-sheet-overlay" hidden>
-    <button id="statsSheetBackdrop" class="item-detail-backdrop" type="button" aria-label="Close stats"></button>
+    <button id="statsSheetBackdrop" class="item-detail-backdrop" type="button" aria-label="능력치 닫기"></button>
     <section class="item-detail-sheet utility-sheet" role="dialog" aria-modal="true" aria-labelledby="statsSheetTitle">
       <div class="sheet-handle"></div>
       <div class="sheet-title-row">
         <div>
-          <p class="eyebrow">CHARACTER</p>
-          <h2 id="statsSheetTitle">Detailed Stats</h2>
+          <p class="eyebrow">캐릭터</p>
+          <h2 id="statsSheetTitle">상세 능력치</h2>
         </div>
-        <button id="statsSheetCloseButton" class="icon-button detail-close-button" type="button" aria-label="Close">X</button>
+        <button id="statsSheetCloseButton" class="icon-button detail-close-button" type="button" aria-label="닫기">×</button>
       </div>
       <dl class="stat-list sheet-stat-list">
-        <div><dt>Attack</dt><dd id="sheetAttackStat">0</dd></div>
-        <div><dt>Defense</dt><dd id="sheetDefenseStat">0</dd></div>
-        <div><dt>Attack Speed</dt><dd id="sheetAttackSpeedStat">0.00</dd></div>
-        <div><dt>Crit Chance</dt><dd id="sheetCritStat">0%</dd></div>
-        <div><dt>Crit Damage</dt><dd id="sheetCritDamageStat">0%</dd></div>
-        <div><dt>Lifesteal</dt><dd id="sheetLifestealStat">0%</dd></div>
-        <div><dt>Boss Damage</dt><dd id="sheetBossDamageStat">0%</dd></div>
-        <div><dt>Gold Bonus</dt><dd id="sheetGoldBonusStat">0%</dd></div>
+        <div><dt>공격력</dt><dd id="sheetAttackStat">0</dd></div>
+        <div><dt>방어력</dt><dd id="sheetDefenseStat">0</dd></div>
+        <div><dt>공격 속도</dt><dd id="sheetAttackSpeedStat">0.00</dd></div>
+        <div><dt>치명타 확률</dt><dd id="sheetCritStat">0%</dd></div>
+        <div><dt>치명타 피해</dt><dd id="sheetCritDamageStat">0%</dd></div>
+        <div><dt>생명력 흡수</dt><dd id="sheetLifestealStat">0%</dd></div>
+        <div><dt>보스 피해</dt><dd id="sheetBossDamageStat">0%</dd></div>
+        <div><dt>골드 보너스</dt><dd id="sheetGoldBonusStat">0%</dd></div>
       </dl>
     </section>
   </div>
 
   <div id="logSheetOverlay" class="utility-sheet-overlay" hidden>
-    <button id="logSheetBackdrop" class="item-detail-backdrop" type="button" aria-label="Close battle log"></button>
+    <button id="logSheetBackdrop" class="item-detail-backdrop" type="button" aria-label="전투 기록 닫기"></button>
     <section class="item-detail-sheet utility-sheet" role="dialog" aria-modal="true" aria-labelledby="logSheetTitle">
       <div class="sheet-handle"></div>
       <div class="sheet-title-row">
         <div>
-          <p class="eyebrow">BATTLE LOG</p>
-          <h2 id="logSheetTitle">Full Log</h2>
+          <p class="eyebrow">전투 기록</p>
+          <h2 id="logSheetTitle">전체 기록</h2>
         </div>
         <div class="sheet-title-actions">
-          <button id="logSheetClearButton" class="text-button" type="button">Clear</button>
-          <button id="logSheetCloseButton" class="icon-button detail-close-button" type="button" aria-label="Close">X</button>
+          <button id="logSheetClearButton" class="text-button" type="button">지우기</button>
+          <button id="logSheetCloseButton" class="icon-button detail-close-button" type="button" aria-label="닫기">×</button>
         </div>
       </div>
       <ol id="fullBattleLog" class="battle-log full-battle-log"></ol>
@@ -407,43 +407,43 @@
   </div>
 
   <div id="settingsSheetOverlay" class="utility-sheet-overlay" hidden>
-    <button id="settingsSheetBackdrop" class="item-detail-backdrop" type="button" aria-label="Close settings"></button>
+    <button id="settingsSheetBackdrop" class="item-detail-backdrop" type="button" aria-label="설정 닫기"></button>
     <section class="item-detail-sheet utility-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsSheetTitle">
       <div class="sheet-handle"></div>
       <div class="sheet-title-row">
         <div>
-          <p class="eyebrow">SYSTEM</p>
-          <h2 id="settingsSheetTitle">Settings</h2>
+          <p class="eyebrow">시스템</p>
+          <h2 id="settingsSheetTitle">설정</h2>
         </div>
-        <button id="settingsSheetCloseButton" class="icon-button detail-close-button" type="button" aria-label="Close">X</button>
+        <button id="settingsSheetCloseButton" class="icon-button detail-close-button" type="button" aria-label="닫기">×</button>
       </div>
       <div class="settings-list">
         <label class="toggle-row">
-          <span><strong>Sound</strong><small>Web Audio effects after the first tap</small></span>
+          <span><strong>사운드</strong><small>첫 터치 후 효과음이 재생됩니다.</small></span>
           <input id="soundToggle" type="checkbox">
           <span class="toggle-switch"></span>
         </label>
         <label class="settings-range-row">
-          <span><strong>Sound Volume</strong><small id="soundVolumeText">55%</small></span>
+          <span><strong>사운드 볼륨</strong><small id="soundVolumeText">55%</small></span>
           <input id="soundVolume" type="range" min="0" max="1" step="0.05">
         </label>
         <label class="toggle-row">
-          <span><strong>Vibration</strong><small>Uses navigator.vibrate when supported</small></span>
+          <span><strong>진동</strong><small>지원 브라우저에서만 작동합니다.</small></span>
           <input id="vibrationToggle" type="checkbox">
           <span class="toggle-switch"></span>
         </label>
         <label class="toggle-row">
-          <span><strong>Screen Shake</strong><small>Critical hits and boss warnings</small></span>
+          <span><strong>화면 흔들림</strong><small>치명타와 보스 경고에 적용됩니다.</small></span>
           <input id="screenShakeToggle" type="checkbox">
           <span class="toggle-switch"></span>
         </label>
         <label class="toggle-row">
-          <span><strong>Reduced Effects</strong><small>Limits heavy visual feedback</small></span>
+          <span><strong>연출 간소화</strong><small>무거운 시각 효과를 줄입니다.</small></span>
           <input id="reducedEffectsToggle" type="checkbox">
           <span class="toggle-switch"></span>
         </label>
         <label class="toggle-row">
-          <span><strong>Damage Numbers</strong><small>Floating combat text</small></span>
+          <span><strong>피해 숫자</strong><small>전투 중 떠오르는 숫자를 표시합니다.</small></span>
           <input id="damageNumbersToggle" type="checkbox">
           <span class="toggle-switch"></span>
         </label>
@@ -452,36 +452,36 @@
   </div>
 
   <div id="itemDetailOverlay" class="item-detail-overlay" hidden>
-    <button id="itemDetailBackdrop" class="item-detail-backdrop" type="button" aria-label="Close item detail"></button>
+    <button id="itemDetailBackdrop" class="item-detail-backdrop" type="button" aria-label="장비 상세 닫기"></button>
     <section class="item-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="itemDetailName">
       <div class="sheet-handle"></div>
       <div class="item-detail-header">
         <div>
-          <p id="itemDetailRarity" class="item-detail-rarity">Common</p>
-          <h2 id="itemDetailName">Item</h2>
-          <p id="itemDetailMeta" class="item-detail-meta">Weapon</p>
+          <p id="itemDetailRarity" class="item-detail-rarity">일반</p>
+          <h2 id="itemDetailName">장비</h2>
+          <p id="itemDetailMeta" class="item-detail-meta">무기</p>
         </div>
-        <button id="itemDetailCloseButton" class="icon-button detail-close-button" type="button" aria-label="Close">X</button>
+        <button id="itemDetailCloseButton" class="icon-button detail-close-button" type="button" aria-label="닫기">×</button>
       </div>
       <div class="item-score-row">
-        <div><span>Score</span><strong id="itemDetailScore">0</strong></div>
-        <div id="itemDetailComparison" class="comparison-value neutral">No equipped item</div>
+        <div><span>점수</span><strong id="itemDetailScore">0</strong></div>
+        <div id="itemDetailComparison" class="comparison-value neutral">장착 장비 없음</div>
       </div>
       <div class="item-extra-info">
-        <div><span>Enhance</span><strong id="itemDetailEnhancement">+0</strong></div>
-        <div><span>Lock</span><strong id="itemDetailLockStatus">Unlocked</strong></div>
-        <div><span>Salvage</span><strong id="itemDetailSalvageValue">0</strong></div>
+        <div><span>강화</span><strong id="itemDetailEnhancement">+0</strong></div>
+        <div><span>잠금</span><strong id="itemDetailLockStatus">해제</strong></div>
+        <div><span>분해</span><strong id="itemDetailSalvageValue">0</strong></div>
       </div>
-      <div class="detail-section"><h3>Base Stats</h3><dl id="itemBaseStatList" class="detail-stat-list"></dl></div>
-      <div class="detail-section"><h3>Enhance and Options</h3><dl id="itemOptionList" class="detail-stat-list"></dl></div>
-      <div id="equippedItemPreview" class="equipped-item-preview" hidden><span>Equipped</span><strong id="equippedItemName">None</strong><small id="equippedItemScore">Score 0</small></div>
+      <div class="detail-section"><h3>기본 능력치</h3><dl id="itemBaseStatList" class="detail-stat-list"></dl></div>
+      <div class="detail-section"><h3>강화와 옵션</h3><dl id="itemOptionList" class="detail-stat-list"></dl></div>
+      <div id="equippedItemPreview" class="equipped-item-preview" hidden><span>장착 중</span><strong id="equippedItemName">없음</strong><small id="equippedItemScore">점수 0</small></div>
       <div class="item-utility-actions">
-        <button id="lockItemButton" class="secondary-button" type="button">Lock</button>
-        <button id="goToForgeButton" class="secondary-button" type="button">Forge</button>
+        <button id="lockItemButton" class="secondary-button" type="button">잠금</button>
+        <button id="goToForgeButton" class="secondary-button" type="button">강화</button>
       </div>
       <div class="item-detail-actions">
-        <button id="unequipItemButton" class="secondary-button wide-button" type="button" hidden>Unequip</button>
-        <button id="equipItemButton" class="primary-button wide-button" type="button">Equip</button>
+        <button id="unequipItemButton" class="secondary-button wide-button" type="button" hidden>해제</button>
+        <button id="equipItemButton" class="primary-button wide-button" type="button">장착</button>
       </div>
     </section>
   </div>
@@ -489,15 +489,15 @@
   <div id="enhanceResultOverlay" class="enhance-result-overlay" hidden>
     <div class="enhance-result-card">
       <span id="enhanceResultIcon">+</span>
-      <strong id="enhanceResultTitle">Enhance Success</strong>
-      <p id="enhanceResultDescription">Item enhanced.</p>
+      <strong id="enhanceResultTitle">강화 성공</strong>
+      <p id="enhanceResultDescription">장비가 강화되었습니다.</p>
     </div>
   </div>
 
   <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
   <noscript>
-    <div class="noscript-warning">This game requires JavaScript.</div>
+    <div class="noscript-warning">이 게임은 JavaScript가 필요합니다.</div>
   </noscript>
 
   <script src="data.js"></script>
