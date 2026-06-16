@@ -276,12 +276,12 @@
       return String(Math.round(number));
     }
     if (Math.abs(number) < 1000000) {
-      return (number / 1000).toFixed(number >= 10000 ? 0 : 1) + "K";
+      return (number / 1000).toFixed(number >= 10000 ? 0 : 1) + "천";
     }
     if (Math.abs(number) < 1000000000) {
-      return (number / 1000000).toFixed(number >= 10000000 ? 0 : 1) + "M";
+      return (number / 1000000).toFixed(number >= 10000000 ? 0 : 1) + "백만";
     }
-    return (number / 1000000000).toFixed(1) + "B";
+    return (number / 1000000000).toFixed(1) + "십억";
   }
 
   function formatPercent(value) {
@@ -297,6 +297,43 @@
     const minutes = Math.floor(safe / 60);
     const remain = safe - minutes * 60;
     return minutes + ":" + remain.toFixed(1).padStart(4, "0");
+  }
+
+  function formatReason(reason) {
+    const labels = {
+      "item-not-found": "장비를 찾을 수 없습니다",
+      "invalid-slot": "잘못된 장비 부위입니다",
+      "level-too-low": "레벨이 부족합니다",
+      "slot-empty": "비어 있는 장비 칸입니다",
+      "inventory-full": "인벤토리가 가득 찼습니다",
+      "max-level": "이미 최대 강화입니다",
+      "not-enough-gold": "골드가 부족합니다",
+      "not-enough-stone": "강화석이 부족합니다",
+      "not-in-inventory": "인벤토리에 없는 장비입니다",
+      equipped: "장착 중인 장비입니다",
+      locked: "잠긴 장비입니다",
+      "already-active": "이미 전투 중입니다",
+      cooldown: "재사용 대기 중입니다",
+      "no-active-battle": "진행 중인 보스전이 없습니다",
+      "no-uses": "사용 횟수가 없습니다",
+      "hp-full": "체력이 이미 가득 찼습니다",
+      "gauge-low": "게이지가 부족합니다",
+      "unknown-skill": "알 수 없는 스킬입니다"
+    };
+    return labels[reason] || reason || "알 수 없는 이유";
+  }
+
+  function formatBossResult(type) {
+    if (type === "victory") {
+      return "승리";
+    }
+    if (type === "timeout") {
+      return "시간 초과";
+    }
+    if (type === "retreat") {
+      return "포기";
+    }
+    return "패배";
   }
 
   function setBar(fill, current, maximum) {
@@ -446,7 +483,7 @@
     const state = State.getState();
     const player = state.player;
     el.playerLevel.textContent = String(player.level);
-    el.playerPower.textContent = "Power " + formatNumber(player.power);
+    el.playerPower.textContent = "전투력 " + formatNumber(player.power);
     el.goldAmount.textContent = formatNumber(state.currencies.gold);
     el.enhancementStoneAmount.textContent = formatNumber(state.currencies.enhancementStone);
     el.expText.textContent = formatNumber(player.exp) + " / " + formatNumber(player.expToNext);
@@ -483,7 +520,7 @@
     const progress = state.progression;
     const region = Data.getRegion(progress.currentRegionId);
     el.regionName.textContent = region.name;
-    el.waveText.textContent = "Wave " + progress.currentWave + " · " + progress.defeatedInWave + "/" + CONFIG.MONSTERS_PER_WAVE;
+    el.waveText.textContent = "웨이브 " + progress.currentWave + " · " + progress.defeatedInWave + "/" + CONFIG.MONSTERS_PER_WAVE;
     el.totalKills.textContent = formatNumber(state.statistics.totalKills);
   }
 
@@ -491,13 +528,13 @@
     const runtime = Combat.getRuntimeSnapshot();
     const monster = runtime.currentMonster;
     if (!monster) {
-      el.monsterTypeLabel.textContent = runtime.status === "player-dead" ? "Recovering" : "Next monster";
-      el.monsterName.textContent = runtime.status === "player-dead" ? "Player defeated" : "Spawning";
+      el.monsterTypeLabel.textContent = runtime.status === "player-dead" ? "회복 중" : "다음 몬스터";
+      el.monsterName.textContent = runtime.status === "player-dead" ? "플레이어 쓰러짐" : "등장 준비";
       el.monsterHpText.textContent = "0 / 0";
       setBar(el.monsterHpFill, 0, 1);
       return;
     }
-    el.monsterTypeLabel.textContent = "Monster";
+    el.monsterTypeLabel.textContent = "몬스터";
     el.monsterName.textContent = monster.name;
     el.monsterHpText.textContent = formatNumber(monster.currentHp) + " / " + formatNumber(monster.maxHp);
     setBar(el.monsterHpFill, monster.currentHp, monster.maxHp);
@@ -510,8 +547,8 @@
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
-    el.pauseButton.textContent = settings.paused ? "▶" : "II";
-    el.pauseButton.title = settings.paused ? "Resume" : "Pause";
+    el.pauseButton.textContent = settings.paused ? "재개" : "정지";
+    el.pauseButton.title = settings.paused ? "재개" : "일시정지";
     el.pauseOverlay.hidden = !settings.paused;
     el.soundToggle.checked = Boolean(settings.soundEnabled);
     el.soundVolume.value = String(settings.soundVolume);
@@ -540,15 +577,15 @@
     clearRarityClasses(container);
     if (!item) {
       container.classList.add("empty");
-      container.querySelector("strong").textContent = "No loot";
-      container.querySelector("small").textContent = "Items can drop while hunting.";
+      container.querySelector("strong").textContent = "획득 장비 없음";
+      container.querySelector("small").textContent = "사냥 중 장비를 얻을 수 있습니다.";
       return;
     }
     const rarity = Data.getRarity(item.rarity);
     container.classList.remove("empty");
     container.classList.add("rarity-" + item.rarity);
     container.querySelector("strong").textContent = item.name;
-    container.querySelector("small").textContent = rarity.name + " · Score " + Loot.getItemScore(item);
+    container.querySelector("small").textContent = rarity.name + " · 점수 " + Loot.getItemScore(item);
   }
 
   function createItemCard(item, context) {
@@ -578,10 +615,10 @@
     head.appendChild(icon);
     head.appendChild(name);
     const meta = document.createElement("small");
-    meta.textContent = rarity.name + " · Lv " + item.itemLevel + " · Score " + Loot.getItemScore(item);
+    meta.textContent = rarity.name + " · 레벨 " + item.itemLevel + " · 점수 " + Loot.getItemScore(item);
     const tags = document.createElement("span");
     tags.className = "item-tags";
-    tags.textContent = (item.enhancement ? "+" + item.enhancement + " " : "+0 ") + (item.locked ? "Locked" : item.equipped ? "Equipped" : "Unlocked");
+    tags.textContent = (item.enhancement ? "+" + item.enhancement + " " : "+0 ") + (item.locked ? "잠김" : item.equipped ? "장착 중" : "해제됨");
     card.appendChild(head);
     card.appendChild(meta);
     card.appendChild(tags);
@@ -601,14 +638,14 @@
       clearRarityClasses(button);
       button.classList.toggle("empty", !item);
       if (!item) {
-        nameNode.textContent = "Empty";
+        nameNode.textContent = "비어 있음";
         metaNode.textContent = slot.name;
         return;
       }
       const rarity = Data.getRarity(item.rarity);
       button.classList.add("rarity-" + item.rarity);
       nameNode.textContent = item.name;
-      metaNode.textContent = rarity.name + " · +" + item.enhancement + " · Score " + Loot.getItemScore(item) + (item.locked ? " · Locked" : "");
+      metaNode.textContent = rarity.name + " · +" + item.enhancement + " · 점수 " + Loot.getItemScore(item) + (item.locked ? " · 잠김" : "");
     });
   }
 
@@ -670,36 +707,36 @@
     el.itemDetailRarity.textContent = rarity.name;
     el.itemDetailRarity.style.color = rarity.color;
     el.itemDetailName.textContent = item.name;
-    el.itemDetailMeta.textContent = slot.name + " · Lv " + item.itemLevel + (located.location === "equipment" ? " · Equipped" : "");
+    el.itemDetailMeta.textContent = slot.name + " · 레벨 " + item.itemLevel + (located.location === "equipment" ? " · 장착 중" : "");
     el.itemDetailScore.textContent = String(Loot.getItemScore(item));
     el.itemDetailEnhancement.textContent = "+" + item.enhancement;
-    el.itemDetailLockStatus.textContent = item.locked ? "Locked" : "Unlocked";
+    el.itemDetailLockStatus.textContent = item.locked ? "잠김" : "해제";
     const salvage = Data.getSalvageReward(item);
-    el.itemDetailSalvageValue.textContent = formatNumber(salvage.gold) + "G / " + formatNumber(salvage.enhancementStone) + "S";
+    el.itemDetailSalvageValue.textContent = formatNumber(salvage.gold) + "골드 / " + formatNumber(salvage.enhancementStone) + "석";
     el.itemDetailComparison.classList.remove("positive", "negative", "neutral");
     if (located.location === "equipment") {
-      el.itemDetailComparison.textContent = "Currently equipped";
+      el.itemDetailComparison.textContent = "현재 장착 중";
       el.itemDetailComparison.classList.add("neutral");
     } else if (!comparison.equippedItem) {
-      el.itemDetailComparison.textContent = "No equipped item";
+      el.itemDetailComparison.textContent = "장착 장비 없음";
       el.itemDetailComparison.classList.add("positive");
     } else if (comparison.scoreDifference > 0) {
-      el.itemDetailComparison.textContent = "+" + comparison.scoreDifference + " score";
+      el.itemDetailComparison.textContent = "점수 +" + comparison.scoreDifference;
       el.itemDetailComparison.classList.add("positive");
     } else if (comparison.scoreDifference < 0) {
-      el.itemDetailComparison.textContent = String(comparison.scoreDifference) + " score";
+      el.itemDetailComparison.textContent = "점수 " + comparison.scoreDifference;
       el.itemDetailComparison.classList.add("negative");
     } else {
-      el.itemDetailComparison.textContent = "Same score";
+      el.itemDetailComparison.textContent = "점수 동일";
       el.itemDetailComparison.classList.add("neutral");
     }
-    createStatRows(el.itemBaseStatList, Loot.getBaseStatRows(item), "No base stats");
-    createStatRows(el.itemOptionList, Loot.getBonusStatRows(item), "No bonus stats");
+    createStatRows(el.itemBaseStatList, Loot.getBaseStatRows(item), "기본 능력치 없음");
+    createStatRows(el.itemOptionList, Loot.getBonusStatRows(item), "추가 옵션 없음");
     const equippedItem = State.getEquippedItem(item.slot);
     if (equippedItem && equippedItem.id !== item.id) {
       el.equippedItemPreview.hidden = false;
       el.equippedItemName.textContent = equippedItem.name;
-      el.equippedItemScore.textContent = "Score " + Loot.getItemScore(equippedItem);
+      el.equippedItemScore.textContent = "점수 " + Loot.getItemScore(equippedItem);
     } else {
       el.equippedItemPreview.hidden = true;
     }
@@ -707,8 +744,8 @@
     el.equipItemButton.hidden = located.location === "equipment";
     el.unequipItemButton.hidden = located.location !== "equipment";
     el.equipItemButton.disabled = !permission.allowed;
-    el.equipItemButton.textContent = permission.allowed ? "Equip" : "Requires Lv " + (permission.requiredLevel || "?");
-    el.lockItemButton.textContent = item.locked ? "Unlock" : "Lock";
+    el.equipItemButton.textContent = permission.allowed ? "장착" : "필요 레벨 " + (permission.requiredLevel || "?");
+    el.lockItemButton.textContent = item.locked ? "잠금 해제" : "잠금";
     el.itemDetailOverlay.hidden = false;
     return true;
   }
@@ -723,14 +760,14 @@
     }
     const result = State.equipItem(selectedItemId);
     if (result.success) {
-      el.equipmentNotice.textContent = result.item.name + " equipped.";
+      el.equipmentNotice.textContent = result.item.name + " 장착 완료.";
       closeItemDetail();
       inventoryDirty = true;
       forgeDirty = true;
       salvageDirty = true;
       renderAll();
     } else {
-      showToast("Cannot equip item: " + result.reason, "error");
+      showToast("장착할 수 없습니다: " + formatReason(result.reason), "error");
     }
   }
 
@@ -744,14 +781,14 @@
     }
     const result = State.unequipItem(located.slot);
     if (result.success) {
-      el.equipmentNotice.textContent = result.item.name + " unequipped.";
+      el.equipmentNotice.textContent = result.item.name + " 해제 완료.";
       closeItemDetail();
       inventoryDirty = true;
       forgeDirty = true;
       salvageDirty = true;
       renderAll();
     } else {
-      showToast("Cannot unequip: " + result.reason, "error");
+      showToast("해제할 수 없습니다: " + formatReason(result.reason), "error");
     }
   }
 
@@ -764,7 +801,7 @@
       return;
     }
     const locked = State.setItemLocked(selectedItemId, !located.item.locked);
-    showToast(locked ? "Item locked." : "Item unlocked.", "info");
+    showToast(locked ? "장비를 잠갔습니다." : "장비 잠금을 해제했습니다.", "info");
     inventoryDirty = true;
     forgeDirty = true;
     salvageDirty = true;
@@ -793,8 +830,8 @@
     if (!item) {
       el.forgeSelectedItem.classList.add("empty");
       el.forgeItemIcon.textContent = "?";
-      el.forgeItemName.textContent = "Select an item";
-      el.forgeItemMeta.textContent = "Choose from the list below.";
+      el.forgeItemName.textContent = "장비 선택";
+      el.forgeItemMeta.textContent = "아래 목록에서 선택하세요.";
       el.forgeItemLevel.textContent = "+0";
       el.forgeCurrentScore.textContent = "0";
       el.forgeNextScore.textContent = "0";
@@ -802,7 +839,7 @@
       el.forgeGoldCost.textContent = "0";
       el.forgeStoneCost.textContent = "0";
       el.enhanceButton.disabled = true;
-      el.enhanceNotice.textContent = "Select an item to enhance.";
+      el.enhanceNotice.textContent = "강화할 장비를 선택하세요.";
       return;
     }
     const slot = Data.getItemSlot(item.slot);
@@ -818,17 +855,17 @@
     el.forgeSelectedItem.classList.add("rarity-" + item.rarity);
     el.forgeItemIcon.textContent = slot.icon;
     el.forgeItemName.textContent = item.name;
-    el.forgeItemMeta.textContent = rarity.name + " · " + slot.name + " · " + (located.location === "equipment" ? "Equipped" : "Inventory");
+    el.forgeItemMeta.textContent = rarity.name + " · " + slot.name + " · " + (located.location === "equipment" ? "장착 중" : "인벤토리");
     el.forgeItemLevel.textContent = "+" + item.enhancement;
     el.forgeCurrentScore.textContent = String(currentScore);
     el.forgeNextScore.textContent = String(nextScore);
-    el.forgeSuccessChance.textContent = info.isMax ? "MAX" : Math.round(info.successChance * 100) + "%";
+    el.forgeSuccessChance.textContent = info.isMax ? "최대" : Math.round(info.successChance * 100) + "%";
     el.forgeGoldCost.textContent = formatNumber(info.goldCost);
     el.forgeStoneCost.textContent = formatNumber(info.stoneCost);
     el.enhanceButton.disabled = info.isMax || state.currencies.gold < info.goldCost || state.currencies.enhancementStone < info.stoneCost;
     el.enhanceNotice.textContent = info.isMax
-      ? "This item is already +15."
-      : "Failure consumes only the listed currency.";
+      ? "이미 +15까지 강화된 장비입니다."
+      : "실패해도 장비는 유지되며 재화만 소모됩니다.";
   }
 
   function renderForgeInventory(force) {
@@ -872,9 +909,9 @@
       const name = document.createElement("strong");
       name.textContent = item.name;
       const meta = document.createElement("span");
-      meta.textContent = "+" + item.enhancement + " · Score " + Loot.getItemScore(item) + " · " + reward.gold + "G / " + reward.enhancementStone + "S";
+      meta.textContent = "+" + item.enhancement + " · 점수 " + Loot.getItemScore(item) + " · " + reward.gold + "골드 / " + reward.enhancementStone + "석";
       const stateText = document.createElement("small");
-      stateText.textContent = item.locked ? "Locked" : selectedIds.has(item.id) ? "Selected" : "Tap to select";
+      stateText.textContent = item.locked ? "잠김" : selectedIds.has(item.id) ? "선택됨" : "눌러서 선택";
       row.appendChild(name);
       row.appendChild(meta);
       row.appendChild(stateText);
@@ -884,7 +921,7 @@
     el.salvageExpectedGold.textContent = formatNumber(preview.gold);
     el.salvageExpectedStones.textContent = formatNumber(preview.enhancementStone);
     el.salvageButton.disabled = preview.count <= 0;
-    el.salvageSelectAllButton.textContent = preview.count > 0 && preview.count === Loot.getSalvageableItems().length ? "Clear All" : "Select All";
+    el.salvageSelectAllButton.textContent = preview.count > 0 && preview.count === Loot.getSalvageableItems().length ? "전체 해제" : "전체 선택";
   }
 
   function renderAutoSalvage() {
@@ -927,10 +964,10 @@
     const item = result.item;
     el.enhanceResultOverlay.hidden = false;
     el.enhanceResultIcon.textContent = result.enhanced ? "+" : "x";
-    el.enhanceResultTitle.textContent = result.enhanced ? "Enhance Success" : "Enhance Failed";
+    el.enhanceResultTitle.textContent = result.enhanced ? "강화 성공" : "강화 실패";
     el.enhanceResultDescription.textContent = result.enhanced
-      ? item.name + " is now +" + item.enhancement + "."
-      : "Currency was consumed. The item was not changed.";
+      ? item.name + " +" + item.enhancement + " 달성."
+      : "재화만 소모되고 장비는 유지되었습니다.";
     window.setTimeout(function () {
       el.enhanceResultOverlay.hidden = true;
     }, 1100);
@@ -939,12 +976,12 @@
   function handleEnhance() {
     const itemId = State.getState().forge.selectedItemId;
     if (!itemId) {
-      showToast("Select an item first.", "error");
+      showToast("먼저 장비를 선택하세요.", "error");
       return;
     }
     const result = State.enhanceItem(itemId);
     if (!result.success) {
-      showToast("Enhance failed: " + result.reason, "error");
+      showToast("강화할 수 없습니다: " + formatReason(result.reason), "error");
       return;
     }
     showEnhanceResult(result);
@@ -953,7 +990,7 @@
     if (result.enhanced) {
       screenShake(false);
     }
-    addBattleLog(result.enhanced ? "Enhance success: " + result.item.name + " +" + result.afterLevel : "Enhance failed: " + result.item.name, result.enhanced ? "reward" : "danger");
+    addBattleLog(result.enhanced ? "강화 성공: " + result.item.name + " +" + result.afterLevel : "강화 실패: " + result.item.name, result.enhanced ? "reward" : "danger");
     inventoryDirty = true;
     forgeDirty = true;
     salvageDirty = true;
@@ -963,13 +1000,13 @@
   function handleSalvage() {
     const result = State.salvageSelectedItems();
     if (!result.success) {
-      showToast("No items to salvage.", "error");
+      showToast("분해할 장비가 없습니다.", "error");
       return;
     }
     playSound("salvage");
     vibrate(16);
-    showToast("Salvaged " + result.items.length + " items.", "success");
-    addBattleLog("Salvaged " + result.items.length + " items for " + result.gold + " gold and " + result.enhancementStone + " stones.", "reward");
+    showToast(result.items.length + "개 장비를 분해했습니다.", "success");
+    addBattleLog("장비 " + result.items.length + "개 분해: 골드 " + result.gold + ", 강화석 " + result.enhancementStone + " 획득.", "reward");
     inventoryDirty = true;
     forgeDirty = true;
     salvageDirty = true;
@@ -997,9 +1034,9 @@
       const title = document.createElement("strong");
       title.textContent = boss.name;
       const meta = document.createElement("span");
-      meta.textContent = "Wave " + boss.unlockWave + " · Recommended " + formatNumber(boss.recommendedPower);
+      meta.textContent = "웨이브 " + boss.unlockWave + " · 권장 전투력 " + formatNumber(boss.recommendedPower);
       const record = document.createElement("small");
-      record.textContent = progress.kills > 0 ? "Kills " + progress.kills + " · Best " + formatTime(progress.bestTime) : unlocked ? "Ready" : "Locked";
+      record.textContent = progress.kills > 0 ? "처치 " + progress.kills + " · 최고 " + formatTime(progress.bestTime) : unlocked ? "도전 가능" : "잠김";
       card.appendChild(title);
       card.appendChild(meta);
       card.appendChild(record);
@@ -1018,12 +1055,12 @@
     renderBossList();
     el.bossRegionName.textContent = region.name;
     el.bossUnlockText.textContent = unlocked
-      ? boss.name + " is unlocked."
-      : "Reach wave " + boss.unlockWave + " to unlock " + boss.name + ".";
+      ? boss.name + " 도전 가능."
+      : "웨이브 " + boss.unlockWave + "에 도달하면 " + boss.name + "이 해금됩니다.";
     el.bossBestTime.textContent = formatTime(progress.bestTime);
-    el.bossFirstClearReward.textContent = "First: " + reward.gold + " gold, " + reward.enhancementStone + " stones, " + Data.getRarity(reward.rarity).name + " gear";
+    el.bossFirstClearReward.textContent = "최초: 골드 " + reward.gold + ", 강화석 " + reward.enhancementStone + ", " + Data.getRarity(reward.rarity).name + " 장비";
     el.bossStartButton.disabled = !unlocked || runtime.active;
-    el.bossStartButton.textContent = runtime.active ? "In Battle" : unlocked ? "Start " + boss.name : "Locked";
+    el.bossStartButton.textContent = runtime.active ? "전투 중" : unlocked ? boss.name + " 도전" : "잠김";
     const anyReady = Data.getBossList(region.id).some(function (entry) {
       return State.isBossUnlocked(entry.id);
     });
@@ -1045,8 +1082,8 @@
       setBar(el.bossEnemyHpFill, boss.currentHp, boss.maxHp);
       el.bossWarningText.textContent = boss.pattern.name;
     } else {
-      el.activeBossName.textContent = "Boss";
-      el.bossEnemyName.textContent = "Boss";
+      el.activeBossName.textContent = "보스";
+      el.bossEnemyName.textContent = "보스";
       el.bossEnemyHpText.textContent = "0 / 0";
       setBar(el.bossEnemyHpFill, 0, 1);
     }
@@ -1054,27 +1091,27 @@
     el.bossWarningOverlay.hidden = !runtime.warningActive;
     el.ultimateGaugeText.textContent = Math.floor(runtime.ultimateGauge) + "%";
     setBar(el.ultimateGaugeFill, runtime.ultimateGauge, 100);
-    renderSkillButton(el.bossSmashButton, el.bossSmashCooldown, runtime.cooldowns.smash, "Ready");
-    renderSkillButton(el.bossGuardButton, el.bossGuardCooldown, runtime.cooldowns.guard, runtime.guardTimer > 0 ? "Guarding" : "Ready");
-    renderSkillButton(el.bossPotionButton, el.bossPotionCount, runtime.cooldowns.potion, runtime.potionUses + " left");
+    renderSkillButton(el.bossSmashButton, el.bossSmashCooldown, runtime.cooldowns.smash, "준비");
+    renderSkillButton(el.bossGuardButton, el.bossGuardCooldown, runtime.cooldowns.guard, runtime.guardTimer > 0 ? "방어 중" : "준비");
+    renderSkillButton(el.bossPotionButton, el.bossPotionCount, runtime.cooldowns.potion, runtime.potionUses + "회 남음");
     el.bossPotionButton.disabled = !runtime.active || runtime.potionUses <= 0 || runtime.cooldowns.potion > 0 || player.currentHp >= player.maxHp;
     el.bossUltimateButton.disabled = !runtime.active || runtime.ultimateGauge < 100;
-    el.bossUltimateStatus.textContent = runtime.ultimateGauge >= 100 ? "Ready" : "Gauge low";
+    el.bossUltimateStatus.textContent = runtime.ultimateGauge >= 100 ? "준비" : "게이지 부족";
     el.bossResultOverlay.hidden = true;
     if (runtime.result && !bossResultDismissed) {
       el.bossResultOverlay.hidden = false;
-      el.bossResultTitle.textContent = runtime.result.type === "victory" ? "Victory" : runtime.result.type === "timeout" ? "Time Out" : runtime.result.type === "retreat" ? "Retreat" : "Defeat";
+      el.bossResultTitle.textContent = formatBossResult(runtime.result.type);
       const rewards = runtime.result.rewards;
       el.bossResultDescription.textContent = rewards
-        ? "Rewards: " + rewards.gold + " gold, " + rewards.enhancementStone + " stones."
-        : "No reward gained.";
+        ? "보상: 골드 " + rewards.gold + ", 강화석 " + rewards.enhancementStone + "."
+        : "획득한 보상이 없습니다.";
     }
   }
 
   function renderSkillButton(button, label, cooldown, readyText) {
     const active = cooldown > 0;
     button.disabled = active || !Combat.getRuntimeSnapshot().bossBattle.active;
-    label.textContent = active ? cooldown.toFixed(1) + "s" : readyText;
+    label.textContent = active ? cooldown.toFixed(1) + "초" : readyText;
     const mask = button.querySelector(".cooldown-mask");
     if (mask) {
       mask.style.transform = active ? "scaleY(1)" : "scaleY(0)";
@@ -1255,9 +1292,9 @@
     context.textAlign = "center";
     context.lineWidth = 4;
     context.strokeStyle = "rgba(0,0,0,0.75)";
-    context.strokeText("LOOT", WIDTH * 0.5, HEIGHT * 0.22);
+    context.strokeText("획득", WIDTH * 0.5, HEIGHT * 0.22);
     context.fillStyle = "#f4fff8";
-    context.fillText("LOOT", WIDTH * 0.5, HEIGHT * 0.22);
+    context.fillText("획득", WIDTH * 0.5, HEIGHT * 0.22);
     context.restore();
   }
 
@@ -1513,21 +1550,21 @@
   }
 
   function showLevelUp(level) {
-    el.levelUpBanner.textContent = "LEVEL " + level;
+    el.levelUpBanner.textContent = "레벨 " + level;
     el.levelUpBanner.classList.remove("show");
     void el.levelUpBanner.offsetWidth;
     el.levelUpBanner.classList.add("show");
     effects.criticalFlash = 0.38;
     triggerFieldShake(true);
-    addDamageText(effects.texts, "LEVEL UP", WIDTH * 0.28, HEIGHT * 0.28, true, "#ffd36a");
+    addDamageText(effects.texts, "레벨업", WIDTH * 0.28, HEIGHT * 0.28, true, "#ffd36a");
     addImpactBurst(effects.particles, WIDTH * 0.28, HEIGHT * 0.5, "#ffd36a", true);
   }
 
   function handleStateEvent(event) {
     if (event.type === "save") {
-      setSaveStatus("Saved", "saved");
+      setSaveStatus("저장됨", "saved");
     } else if (event.type === "save-error" || event.type === "load-error") {
-      setSaveStatus("Save error", "error");
+      setSaveStatus("저장 오류", "error");
     }
     if ([
       "loot",
@@ -1579,13 +1616,13 @@
       addDamageText(effects.texts, "-" + payload.damage, WIDTH * 0.28, HEIGHT * 0.32, false, "#ff8b94");
     } else if (event.type === "monster-defeated") {
       addImpactBurst(effects.particles, WIDTH * 0.73, HEIGHT * 0.54, "#65df9a", true);
-      addBattleLog("Defeated " + payload.monster.name + " · +" + payload.gold + " gold", "reward");
+      addBattleLog(payload.monster.name + " 처치 · 골드 +" + payload.gold, "reward");
       if (payload.drop && payload.drop.dropped) {
         if (payload.drop.autoSalvaged) {
           effects.lootGlow = 0.65;
           playSound("salvage");
-          addBattleLog("Auto salvaged " + payload.drop.item.name + " for " + payload.drop.salvage.gold + " gold and " + payload.drop.salvage.enhancementStone + " stones.", "reward");
-          showToast("Auto salvaged " + payload.drop.item.name, "info");
+          addBattleLog("자동 분해: " + payload.drop.item.name + " · 골드 " + payload.drop.salvage.gold + ", 강화석 " + payload.drop.salvage.enhancementStone, "reward");
+          showToast("자동 분해: " + payload.drop.item.name, "info");
         } else if (payload.drop.stored) {
           effects.lootGlow = payload.drop.item && payload.drop.item.rarity === "legendary" ? 1.15 : 0.9;
           playSound("loot");
@@ -1594,8 +1631,8 @@
             triggerFieldShake(true);
             screenShake(true);
           }
-          addBattleLog("Loot: " + payload.drop.item.name, "loot");
-          showToast("Loot found: " + payload.drop.item.name, "success");
+          addBattleLog("장비 획득: " + payload.drop.item.name, "loot");
+          showToast("장비 획득: " + payload.drop.item.name, "success");
         }
       }
       inventoryDirty = true;
@@ -1604,10 +1641,10 @@
       bossListDirty = true;
     } else if (event.type === "player-defeated") {
       triggerFieldShake(true);
-      addBattleLog("Player defeated. Reviving soon.", "danger");
+      addBattleLog("플레이어가 쓰러졌습니다. 곧 부활합니다.", "danger");
     } else if (event.type === "boss-start") {
       bossResultDismissed = false;
-      addBattleLog("Boss battle started: " + payload.boss.name, "boss");
+      addBattleLog("보스전 시작: " + payload.boss.name, "boss");
     } else if (event.type === "boss-damage") {
       effects.playerAttack = PLAYER_ATTACK_DURATION;
       effects.bossHit = HIT_DURATION;
@@ -1638,26 +1675,26 @@
       playSound("warning");
       vibrate([20, 30, 20]);
       screenShake(true);
-      showToast("Danger attack incoming. Use Guard.", "error");
+      showToast("위험 공격 예고. 방어를 사용하세요.", "error");
     } else if (event.type === "boss-end") {
       bossListDirty = true;
       inventoryDirty = true;
       forgeDirty = true;
       salvageDirty = true;
       const type = payload.type;
-      addBattleLog("Boss battle ended: " + type, type === "victory" ? "reward" : "danger");
+      addBattleLog("보스전 종료: " + formatBossResult(type), type === "victory" ? "reward" : "danger");
       if (payload.rewards && payload.rewards.item) {
         playSound("bossKill");
         vibrate([35, 35, 55]);
         screenShake(true);
         const item = payload.rewards.item.item;
         if (item) {
-          addBattleLog("Boss reward: " + item.name, "loot");
+          addBattleLog("보스 보상: " + item.name, "loot");
         }
       }
     } else if (event.type === "boss-skill") {
       if (payload.skill === "potion") {
-        showToast("Potion restored " + payload.healed + " HP.", "success");
+        showToast("물약으로 체력 " + payload.healed + " 회복.", "success");
       }
     }
   }
@@ -1695,7 +1732,7 @@
       renderAll();
     }
     function resetGame() {
-      if (window.confirm("Reset local save data?")) {
+    if (window.confirm("로컬 저장 데이터를 초기화할까요?")) {
         State.reset();
         Combat.resetRuntime();
         resetVisuals();
@@ -1828,7 +1865,7 @@
 
     function autoEquip() {
       const result = State.autoEquipBest();
-      showToast(result.changed ? "Best gear equipped." : "No better gear found.", result.changed ? "success" : "info");
+      showToast(result.changed ? "가장 좋은 장비를 장착했습니다." : "더 좋은 장비가 없습니다.", result.changed ? "success" : "info");
       inventoryDirty = true;
       forgeDirty = true;
       salvageDirty = true;
@@ -1892,7 +1929,7 @@
       if (row && el.salvageInventoryGrid.contains(row)) {
         const result = State.toggleSalvageSelection(row.dataset.itemId);
         if (!result.allowed) {
-          showToast("Cannot salvage: " + result.reason, "error");
+          showToast("분해할 수 없습니다: " + formatReason(result.reason), "error");
         }
         salvageDirty = true;
         renderSalvage(true);
@@ -1923,7 +1960,7 @@
     el.autoSalvageInputs.forEach(function (input) {
       function handleChange() {
         State.setAutoSalvage(input.dataset.rarity, input.checked);
-        showToast("Auto salvage updated.", "info");
+        showToast("자동 분해 설정을 변경했습니다.", "info");
       }
       input.addEventListener("change", handleChange);
       cleanups.push(function () {
@@ -1975,7 +2012,7 @@
     function startBoss() {
       const result = Combat.startBossBattle(State.getState().boss.selectedBossId);
       if (!result.success) {
-        showToast("Cannot start boss: " + result.reason, "error");
+        showToast("보스전을 시작할 수 없습니다: " + formatReason(result.reason), "error");
         return;
       }
       bossResultDismissed = false;
@@ -1990,7 +2027,7 @@
       return function () {
         const result = Combat.useBossSkill(skillId);
         if (!result.success) {
-          showToast("Skill unavailable: " + result.reason, "error");
+          showToast("스킬을 사용할 수 없습니다: " + formatReason(result.reason), "error");
         }
       };
     }
@@ -2049,7 +2086,7 @@
     if (saveStatusTimer > 0) {
       saveStatusTimer -= delta;
       if (saveStatusTimer <= 0 && !el.saveStatus.classList.contains("error")) {
-        el.saveStatus.textContent = State.isDirty() ? "Save pending" : "Saved";
+        el.saveStatus.textContent = State.isDirty() ? "저장 대기" : "저장됨";
         el.saveStatus.classList.remove("saved");
       }
     }
@@ -2116,8 +2153,8 @@
     renderAll();
     renderCanvas(0);
     renderBossCanvas(0);
-    setSaveStatus("Autosave ready");
-    addBattleLog("Auto hunt started.", "reward");
+    setSaveStatus("자동 저장 준비");
+    addBattleLog("자동 사냥 시작.", "reward");
     return true;
   }
 
