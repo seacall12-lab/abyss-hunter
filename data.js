@@ -24,8 +24,8 @@
 
   const PLAYER = {
     id: "warrior",
-    name: "Abyss Warrior",
-    className: "Warrior",
+    name: "심연의 전사",
+    className: "전사",
     baseStats: {
       maxHp: 140,
       attack: 16,
@@ -55,7 +55,7 @@
   const MONSTERS = {
     forestSlime: {
       id: "forestSlime",
-      name: "Forest Slime",
+      name: "숲 슬라임",
       levelOffset: 0,
       maxHp: 46,
       attack: 7,
@@ -71,7 +71,7 @@
     },
     thornWolf: {
       id: "thornWolf",
-      name: "Thorn Wolf",
+      name: "가시 늑대",
       levelOffset: 1,
       maxHp: 66,
       attack: 10,
@@ -87,7 +87,7 @@
     },
     goblinScout: {
       id: "goblinScout",
-      name: "Goblin Scout",
+      name: "고블린 정찰병",
       levelOffset: 2,
       maxHp: 82,
       attack: 12,
@@ -107,8 +107,8 @@
     {
       id: "beginnerForest",
       order: 1,
-      name: "Beginner Forest",
-      description: "The first hunting ground.",
+      name: "초보자의 숲",
+      description: "첫 번째 사냥터입니다.",
       unlockRequirement: null,
       monsterIds: ["forestSlime", "thornWolf", "goblinScout"],
       bossIds: ["ancientTreant", "thornAlpha", "goblinWarlord"],
@@ -122,8 +122,8 @@
     {
       id: "abandonedMine",
       order: 2,
-      name: "Abandoned Mine",
-      description: "Prepared for a later update.",
+      name: "버려진 광산",
+      description: "이후 업데이트를 위해 준비된 지역입니다.",
       unlockRequirement: {
         type: "bossClear",
         bossId: "goblinWarlord"
@@ -146,7 +146,7 @@
       regionId: "beginnerForest",
       order: 1,
       name: "고대 수호목",
-      subtitle: "Forest Guardian",
+      subtitle: "숲의 수호자",
       unlockWave: 10,
       recommendedPower: 420,
       timeLimit: 60,
@@ -162,7 +162,7 @@
       accentColor: "#d5f0a8",
       auraColor: "rgba(115, 191, 92, 0.32)",
       pattern: {
-        name: "Root Crush",
+        name: "뿌리 강타",
         interval: 9,
         firstDelay: 6.5,
         warningDuration: 2.2,
@@ -183,7 +183,7 @@
       regionId: "beginnerForest",
       order: 2,
       name: "가시 우두머리",
-      subtitle: "Thorn Pack Alpha",
+      subtitle: "가시 무리 우두머리",
       unlockWave: 20,
       recommendedPower: 850,
       timeLimit: 65,
@@ -199,7 +199,7 @@
       accentColor: "#ffcf72",
       auraColor: "rgba(192, 206, 235, 0.34)",
       pattern: {
-        name: "Thorn Pounce",
+        name: "가시 도약",
         interval: 8,
         firstDelay: 5.5,
         warningDuration: 1.8,
@@ -220,7 +220,7 @@
       regionId: "beginnerForest",
       order: 3,
       name: "고블린 전쟁군주",
-      subtitle: "Goblin Warlord",
+      subtitle: "고블린 전쟁군주",
       unlockWave: 30,
       recommendedPower: 1450,
       timeLimit: 70,
@@ -236,7 +236,7 @@
       accentColor: "#ff7d65",
       auraColor: "rgba(213, 75, 62, 0.32)",
       pattern: {
-        name: "Warlord Smash",
+        name: "전쟁군주 강타",
         interval: 7.5,
         firstDelay: 5,
         warningDuration: 1.6,
@@ -258,14 +258,14 @@
   const BOSS_SKILLS = {
     smash: {
       id: "smash",
-      name: "Smash",
+      name: "강타",
       cooldown: 5,
       damageMultiplier: 2.35,
       ultimateGain: 22
     },
     guard: {
       id: "guard",
-      name: "Guard",
+      name: "방어",
       cooldown: 6,
       duration: 2.2,
       normalReduction: 0.55,
@@ -273,14 +273,14 @@
     },
     potion: {
       id: "potion",
-      name: "Potion",
+      name: "회복 물약",
       cooldown: 4,
       uses: 3,
       healRatio: 0.35
     },
     ultimate: {
       id: "ultimate",
-      name: "Ultimate",
+      name: "궁극기",
       requiredGauge: 100,
       damageMultiplier: 6.5
     },
@@ -289,18 +289,18 @@
   };
 
   const ITEM_SLOTS = {
-    weapon: { id: "weapon", name: "Weapon", icon: "W", order: 1 },
-    helmet: { id: "helmet", name: "Helmet", icon: "H", order: 2 },
-    armor: { id: "armor", name: "Armor", icon: "A", order: 3 },
-    gloves: { id: "gloves", name: "Gloves", icon: "G", order: 4 },
-    boots: { id: "boots", name: "Boots", icon: "B", order: 5 },
-    necklace: { id: "necklace", name: "Necklace", icon: "N", order: 6 }
+    weapon: { id: "weapon", name: "무기", icon: "무", order: 1 },
+    helmet: { id: "helmet", name: "투구", icon: "투", order: 2 },
+    armor: { id: "armor", name: "갑옷", icon: "갑", order: 3 },
+    gloves: { id: "gloves", name: "장갑", icon: "장", order: 4 },
+    boots: { id: "boots", name: "신발", icon: "신", order: 5 },
+    necklace: { id: "necklace", name: "목걸이", icon: "목", order: 6 }
   };
 
   const RARITIES = {
     common: {
       id: "common",
-      name: "Common",
+      name: "일반",
       color: "#aab2c0",
       glow: "rgba(170, 178, 192, 0.24)",
       order: 1,
@@ -311,7 +311,7 @@
     },
     rare: {
       id: "rare",
-      name: "Rare",
+      name: "희귀",
       color: "#4b8eff",
       glow: "rgba(75, 142, 255, 0.34)",
       order: 2,
@@ -322,7 +322,7 @@
     },
     epic: {
       id: "epic",
-      name: "Epic",
+      name: "영웅",
       color: "#af58ff",
       glow: "rgba(175, 88, 255, 0.38)",
       order: 3,
@@ -333,7 +333,7 @@
     },
     legendary: {
       id: "legendary",
-      name: "Legendary",
+      name: "전설",
       color: "#ff993d",
       glow: "rgba(255, 153, 61, 0.45)",
       order: 4,
@@ -345,25 +345,25 @@
   };
 
   const ITEM_BASE_NAMES = {
-    weapon: ["Iron Edge", "Thorn Blade", "Goblin Splitter"],
-    helmet: ["Leather Helm", "Thorn Hood", "Scout Helmet"],
-    armor: ["Traveler Armor", "Bark Plate", "Goblin Mail"],
-    gloves: ["Leather Gloves", "Battle Grips", "Wolf Claws"],
-    boots: ["Trail Boots", "Hunter Boots", "Silent Steps"],
-    necklace: ["Forest Charm", "Blue Core Pendant", "War Token"]
+    weapon: ["철검", "가시 검", "고블린 절단검"],
+    helmet: ["가죽 투구", "가시 두건", "정찰병 투구"],
+    armor: ["여행자 갑옷", "나무껍질 흉갑", "고블린 사슬갑옷"],
+    gloves: ["가죽 장갑", "전투 손아귀", "늑대 발톱"],
+    boots: ["길잡이 장화", "사냥꾼 장화", "그림자 발걸음"],
+    necklace: ["숲의 부적", "푸른 핵 목걸이", "전쟁 증표"]
   };
 
   const ITEM_AFFIXES = [
-    { stat: "attack", name: "Attack", min: 1, max: 5, type: "flat" },
-    { stat: "defense", name: "Defense", min: 1, max: 4, type: "flat" },
-    { stat: "maxHp", name: "Max HP", min: 8, max: 28, type: "flat" },
-    { stat: "attackSpeed", name: "Attack Speed", min: 0.01, max: 0.05, type: "ratio" },
-    { stat: "critChance", name: "Crit Chance", min: 0.01, max: 0.04, type: "ratio" },
-    { stat: "critDamage", name: "Crit Damage", min: 0.04, max: 0.12, type: "ratio" },
-    { stat: "lifesteal", name: "Lifesteal", min: 0.005, max: 0.02, type: "ratio" },
-    { stat: "bossDamage", name: "Boss Damage", min: 0.02, max: 0.08, type: "ratio" },
-    { stat: "normalDamage", name: "Monster Damage", min: 0.02, max: 0.08, type: "ratio" },
-    { stat: "goldBonus", name: "Gold Bonus", min: 0.02, max: 0.08, type: "ratio" }
+    { stat: "attack", name: "공격력", min: 1, max: 5, type: "flat" },
+    { stat: "defense", name: "방어력", min: 1, max: 4, type: "flat" },
+    { stat: "maxHp", name: "최대 체력", min: 8, max: 28, type: "flat" },
+    { stat: "attackSpeed", name: "공격 속도", min: 0.01, max: 0.05, type: "ratio" },
+    { stat: "critChance", name: "치명타 확률", min: 0.01, max: 0.04, type: "ratio" },
+    { stat: "critDamage", name: "치명타 피해", min: 0.04, max: 0.12, type: "ratio" },
+    { stat: "lifesteal", name: "생명력 흡수", min: 0.005, max: 0.02, type: "ratio" },
+    { stat: "bossDamage", name: "보스 피해", min: 0.02, max: 0.08, type: "ratio" },
+    { stat: "normalDamage", name: "몬스터 피해", min: 0.02, max: 0.08, type: "ratio" },
+    { stat: "goldBonus", name: "골드 보너스", min: 0.02, max: 0.08, type: "ratio" }
   ];
 
   const LOOT = {
@@ -411,16 +411,16 @@
   ];
 
   const STAT_META = {
-    maxHp: { name: "Max HP", type: "flat", powerWeight: 0.18 },
-    attack: { name: "Attack", type: "flat", powerWeight: 5.2 },
-    defense: { name: "Defense", type: "flat", powerWeight: 3.4 },
-    attackSpeed: { name: "Attack Speed", type: "ratio", powerWeight: 72 },
-    critChance: { name: "Crit Chance", type: "ratio", powerWeight: 420 },
-    critDamage: { name: "Crit Damage", type: "ratio", powerWeight: 120 },
-    lifesteal: { name: "Lifesteal", type: "ratio", powerWeight: 520 },
-    bossDamage: { name: "Boss Damage", type: "ratio", powerWeight: 260 },
-    normalDamage: { name: "Monster Damage", type: "ratio", powerWeight: 190 },
-    goldBonus: { name: "Gold Bonus", type: "ratio", powerWeight: 90 }
+    maxHp: { name: "최대 체력", type: "flat", powerWeight: 0.18 },
+    attack: { name: "공격력", type: "flat", powerWeight: 5.2 },
+    defense: { name: "방어력", type: "flat", powerWeight: 3.4 },
+    attackSpeed: { name: "공격 속도", type: "ratio", powerWeight: 72 },
+    critChance: { name: "치명타 확률", type: "ratio", powerWeight: 420 },
+    critDamage: { name: "치명타 피해", type: "ratio", powerWeight: 120 },
+    lifesteal: { name: "생명력 흡수", type: "ratio", powerWeight: 520 },
+    bossDamage: { name: "보스 피해", type: "ratio", powerWeight: 260 },
+    normalDamage: { name: "몬스터 피해", type: "ratio", powerWeight: 190 },
+    goldBonus: { name: "골드 보너스", type: "ratio", powerWeight: 90 }
   };
 
   function clamp(value, min, max) {
