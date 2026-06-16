@@ -1,0 +1,160 @@
+@media (max-width: 430px) {
+  .app-shell {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .top-bar {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .brand-block {
+    min-width: 0;
+  }
+
+  .brand-block .eyebrow {
+    display: none;
+  }
+
+  .brand-block h1 {
+    overflow: hidden;
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .top-currencies {
+    grid-column: auto;
+    display: flex;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .currency-chip {
+    min-width: 48px;
+    padding: 4px 5px;
+  }
+
+  .currency-chip span {
+    font-size: 9px;
+  }
+
+  .currency-chip strong {
+    font-size: 13px;
+  }
+
+  .top-actions {
+    grid-column: auto;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .icon-button {
+    width: 30px;
+    min-height: 30px;
+    font-size: 12px;
+  }
+
+  .view-tabs {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    transform: none;
+  }
+
+  .view-tab {
+    min-width: 0;
+    padding: 6px 2px;
+  }
+
+  .player-summary {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .level-emblem {
+    width: 46px;
+  }
+
+  .summary-center,
+  .progress-group {
+    gap: 6px;
+  }
+
+  .stage-heading,
+  .info-grid,
+  .boss-status-grid,
+  .equipment-grid,
+  .inventory-filters,
+  .enhance-preview-grid,
+  .salvage-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .boss-skill-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #huntView.active .stage-heading,
+  #huntView.active .combat-hud {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #huntView.active .stage-heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  #huntView.active .combat-hud {
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  #huntView.active .combatant-card {
+    padding: 8px;
+  }
+
+  #huntView.active .combatant-title {
+    display: flex;
+    gap: 4px;
+  }
+
+  #huntView.active .combatant-title span,
+  #huntView.active .combatant-title strong {
+    font-size: 12px;
+  }
+
+  #huntView.active .compact {
+    margin: 5px 0 4px;
+  }
+
+  #huntView.active .battlefield {
+    width: min(100%, clamp(240px, calc(100dvh - 544px), 300px));
+  }
+
+  #huntView.active .stage-heading h2 {
+    font-size: 24px;
+  }
+
+  .footer-note {
+    display: none;
+  }
+
+  #bossBattlePanel .boss-status-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  #bossBattlePanel .boss-status-grid article {
+    padding: 8px;
+  }
+
+  .boss-skill-button {
+    min-height: 68px;
+  }
+
+  .item-extra-info {
+    grid-template-columns: 1fr;
+  }
+}
