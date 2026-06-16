@@ -1,8 +1,40 @@
 (function (global) {
   "use strict";
 
+  function loadContentDataFallback() {
+    if (global.GameContentData || !global.XMLHttpRequest || !global.document) {
+      return;
+    }
+
+    try {
+      const currentScript = global.document.currentScript;
+      const baseUrl = currentScript && currentScript.src
+        ? currentScript.src
+        : global.document.baseURI;
+      const url = new URL("content-data.js", baseUrl);
+      const currentUrl = currentScript && currentScript.src ? new URL(currentScript.src) : null;
+      const version = currentUrl ? currentUrl.searchParams.get("v") : "";
+
+      if (version) {
+        url.searchParams.set("v", version);
+      }
+
+      const request = new XMLHttpRequest();
+      request.open("GET", url.href, false);
+      request.send(null);
+
+      if (request.status === 0 || (request.status >= 200 && request.status < 300)) {
+        (0, eval)(`${request.responseText}\n//# sourceURL=${url.href}`);
+      }
+    } catch (error) {
+      console.error("Failed to load content-data.js fallback.", error);
+    }
+  }
+
+  loadContentDataFallback();
+
   const CONFIG = {
-    GAME_VERSION: "0.5.4",
+    GAME_VERSION: "0.5.5",
     SAVE_VERSION: 5,
     STORAGE_KEY: "abyssHunter.save",
     AUTOSAVE_INTERVAL_MS: 5000,
