@@ -101,7 +101,7 @@
       console.error("Game startup failed", error);
       const warning = document.createElement("div");
       warning.className = "startup-error";
-      warning.textContent = "Abyss Hunter를 시작할 수 없습니다. 브라우저 콘솔을 확인하세요.";
+      warning.textContent = "Abyss Hunter를 시작할 수 없습니다. " + (error && error.message ? error.message : "브라우저 콘솔을 확인하세요.");
       document.body.appendChild(warning);
     }
   }
