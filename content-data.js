@@ -352,7 +352,7 @@
   };
 
   const ENHANCEMENT = {
-    maxLevel: CONFIG.MAX_ENHANCEMENT,
+    maxLevel: 15,
     successRates: [
       1,
       0.95,
