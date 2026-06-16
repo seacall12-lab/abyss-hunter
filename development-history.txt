@@ -111,3 +111,6 @@ style.css / styles/*.css
 index.html
 - content-data.js를 data.js보다 먼저 로드하도록 스크립트 순서를 정리함
 - 정적 파일 캐시 쿼리를 v0.5.4로 갱신함
+## [v0.5.5] 2026-06-16
+- v0.5.4 파일 분리 후 content-data.js 로딩 실패 시 data.js가 fallback으로 복구하도록 안정화.
+- 초기 스크립트 오류가 화면에 표시되도록 startup error 표시를 추가해 무반응 원인 확인을 쉽게 함.
