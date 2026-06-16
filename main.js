@@ -29,9 +29,9 @@
   function saveNow(force) {
     const saved = State.save(Boolean(force));
     if (saved) {
-      UI.setSaveStatus("Saved", "saved");
+      UI.setSaveStatus("저장됨", "saved");
     } else {
-      UI.setSaveStatus("Save failed", "error");
+      UI.setSaveStatus("저장 실패", "error");
     }
     return saved;
   }
@@ -66,7 +66,7 @@
     } catch (error) {
       loopErrorCount += 1;
       console.error("Game loop error", error);
-      UI.setSaveStatus("Runtime error", "error");
+      UI.setSaveStatus("실행 오류", "error");
       if (loopErrorCount > 3) {
         started = false;
         saveNow(true);
@@ -92,7 +92,7 @@
       State.load();
       Combat.initialize();
       UI.initialize();
-      UI.setSaveStatus("Autosave ready");
+      UI.setSaveStatus("자동 저장 준비");
       saveNow(false);
       started = true;
       lastFrame = 0;
@@ -101,7 +101,7 @@
       console.error("Game startup failed", error);
       const warning = document.createElement("div");
       warning.className = "startup-error";
-      warning.textContent = "Abyss Hunter could not start. Check the browser console.";
+      warning.textContent = "Abyss Hunter를 시작할 수 없습니다. 브라우저 콘솔을 확인하세요.";
       document.body.appendChild(warning);
     }
   }
