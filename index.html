@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#080d18">
   <meta name="description" content="Abyss Hunter 모바일 웹 RPG">
-  <title>Abyss Hunter v0.5.1</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Abyss Hunter v0.5.4</title>
+  <link rel="stylesheet" href="style.css?v=0.5.4">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -310,7 +310,7 @@
       </div>
 
       <div id="bossView" class="game-view" data-view-panel="boss" hidden>
-        <section class="boss-select-panel panel">
+        <section id="bossSelectPanel" class="boss-select-panel panel">
           <div class="boss-select-header">
             <div>
               <p class="eyebrow">지역 보스</p>
@@ -359,7 +359,7 @@
     </main>
 
     <footer class="footer-note">
-      <span>Abyss Hunter v0.5.1</span>
+      <span>Abyss Hunter v0.5.4</span>
       <span>브라우저 자동 저장</span>
     </footer>
   </div>
@@ -500,11 +500,12 @@
     <div class="noscript-warning">이 게임은 JavaScript가 필요합니다.</div>
   </noscript>
 
-  <script src="data.js"></script>
-  <script src="state.js"></script>
-  <script src="combat.js"></script>
-  <script src="loot.js"></script>
-  <script src="ui.js"></script>
-  <script src="main.js"></script>
+  <script src="content-data.js?v=0.5.4"></script>
+  <script src="data.js?v=0.5.4"></script>
+  <script src="state.js?v=0.5.4"></script>
+  <script src="combat.js?v=0.5.4"></script>
+  <script src="loot.js?v=0.5.4"></script>
+  <script src="ui.js?v=0.5.4"></script>
+  <script src="main.js?v=0.5.4"></script>
 </body>
 </html>
