@@ -589,7 +589,7 @@ canvas {
 }
 
 .recent-combat-log:empty::before {
-  content: "Combat log will appear here.";
+  content: "전투 기록이 여기에 표시됩니다.";
   color: var(--muted);
   font-size: 12px;
 }
