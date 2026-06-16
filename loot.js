@@ -16,7 +16,6 @@
   const Data = global.GameData;
   const State = global.GameState;
   const CONFIG = Data.CONFIG;
-
   const listeners = new Set();
 
   const RARITY_PREFIXES = {
@@ -45,12 +44,26 @@
     ]
   };
 
-  /*
-   * 슬롯별 기본 능력치 규칙
-   *
-   * 각 장비는 슬롯의 역할이 분명하게 느껴지도록
-   * 서로 다른 기본 능력치를 가진다.
-   */
+  const BOSS_PREFIXES = {
+    ancientTreant: [
+      "수호목의",
+      "고목의",
+      "뿌리 깊은"
+    ],
+
+    thornAlpha: [
+      "우두머리의",
+      "가시 돋친",
+      "포식자의"
+    ],
+
+    goblinWarlord: [
+      "전쟁군주의",
+      "정복자의",
+      "파괴적인"
+    ]
+  };
+
   const SLOT_BASE_STAT_RULES = {
     weapon: [
       {
@@ -144,6 +157,13 @@
     level: "레벨순"
   };
 
+  const FORGE_SORT_LABELS = {
+    score: "점수순",
+    enhancement: "강화순",
+    rarity: "등급순",
+    level: "레벨순"
+  };
+
   function clone(value) {
     if (value === undefined) {
       return undefined;
@@ -162,9 +182,10 @@
   ) {
     const numeric = Number(value);
 
-    let result = Number.isFinite(numeric)
-      ? numeric
-      : Number(fallback) || 0;
+    let result =
+      Number.isFinite(numeric)
+        ? numeric
+        : Number(fallback) || 0;
 
     if (Number.isFinite(min)) {
       result = Math.max(min, result);
@@ -178,29 +199,34 @@
   }
 
   function emit(type, payload) {
-    listeners.forEach(function (listener) {
-      try {
-        listener({
-          type: type,
-          payload: payload || null
-        });
-      } catch (error) {
-        console.error(
-          "GameLoot 이벤트 처리 중 오류가 발생했습니다.",
-          error
-        );
+    listeners.forEach(
+      function (listener) {
+        try {
+          listener({
+            type: type,
+            payload: payload || null
+          });
+        } catch (error) {
+          console.error(
+            "GameLoot 이벤트 처리 중 오류가 발생했습니다.",
+            error
+          );
+        }
       }
-    });
+    );
   }
 
   function subscribe(listener) {
-    if (typeof listener !== "function") {
+    if (
+      typeof listener !==
+      "function"
+    ) {
       return function () {};
     }
 
     listeners.add(listener);
 
-    return function unsubscribe() {
+    return function () {
       listeners.delete(listener);
     };
   }
@@ -208,7 +234,7 @@
   function pickRandom(array) {
     if (
       !Array.isArray(array) ||
-      array.length === 0
+      !array.length
     ) {
       return null;
     }
@@ -221,42 +247,42 @@
     ];
   }
 
-  function roundStatValue(value, type) {
-    if (type === "ratio") {
-      return Math.round(
-        value * 1000
-      ) / 1000;
-    }
-
-    return Math.max(
-      1,
-      Math.round(value)
-    );
+  function roundStatValue(
+    value,
+    type
+  ) {
+    return type === "ratio"
+      ? Math.round(
+          value * 10000
+        ) / 10000
+      : Math.max(
+          1,
+          Math.round(
+            value * 10
+          ) / 10
+        );
   }
 
   function createItemId() {
     return [
       "item",
       Date.now().toString(36),
-
       Math.random()
         .toString(36)
         .slice(2, 9)
     ].join("-");
   }
 
-  /*
-   * 일반 몬스터 기본 드롭률은 8%다.
-   * 웨이브가 오를수록 최대 5%p까지 증가한다.
-   */
-  function calculateDropChance(context) {
-    const source = context || {};
+  function calculateDropChance(
+    context
+  ) {
+    const source =
+      context || {};
 
-    if (source.forceDrop) {
-      return 1;
-    }
-
-    if (source.isBoss) {
+    if (
+      source.forceDrop ||
+      source.isBoss
+    ) {
       return 1;
     }
 
@@ -272,21 +298,22 @@
       )
     );
 
-    const waveBonus = Math.min(
-      0.05,
-      (wave - 1) * 0.001
-    );
-
     return Data.clamp(
       Data.LOOT.baseDropChance +
-      waveBonus,
+      Math.min(
+        0.05,
+        (wave - 1) * 0.001
+      ),
       0,
       0.25
     );
   }
 
-  function buildRarityWeights(context) {
-    const source = context || {};
+  function buildRarityWeights(
+    context
+  ) {
+    const source =
+      context || {};
 
     const wave = Math.max(
       1,
@@ -300,50 +327,73 @@
       )
     );
 
-    const weights = {
-      common:
-        Data.RARITIES.common.weight,
-
-      rare:
-        Data.RARITIES.rare.weight,
-
-      epic:
-        Data.RARITIES.epic.weight,
-
-      legendary:
-        Data.RARITIES.legendary.weight
-    };
-
-    const progressionBonus = Math.min(
-      8,
+    const bonus = Math.min(
+      10,
       Math.floor(
         (wave - 1) / 5
       )
     );
 
-    weights.common = Math.max(
-      35,
-      weights.common -
-      progressionBonus
-    );
+    const weights = {
+      common:
+        Data.RARITIES
+          .common.weight,
+
+      rare:
+        Data.RARITIES
+          .rare.weight,
+
+      epic:
+        Data.RARITIES
+          .epic.weight,
+
+      legendary:
+        Data.RARITIES
+          .legendary.weight
+    };
+
+    weights.common =
+      Math.max(
+        32,
+        weights.common -
+        bonus
+      );
 
     weights.rare +=
-      progressionBonus * 0.7;
+      bonus * 0.7;
 
     weights.epic +=
-      progressionBonus * 0.24;
+      bonus * 0.24;
 
     weights.legendary +=
-      progressionBonus * 0.06;
+      bonus * 0.06;
 
     if (source.isBoss) {
-      weights.common *= 0.18;
-      weights.rare *= 1.8;
-      weights.epic *= 3.2;
-      weights.legendary *= 4.5;
+      weights.common *= 0.12;
+      weights.rare *= 1.9;
+      weights.epic *= 3.4;
+      weights.legendary *= 5;
     }
 
     return weights;
+  }
+
+  function enforceMinimumRarity(
+    rarityId,
+    minimumRarity
+  ) {
+    if (!minimumRarity) {
+      return rarityId;
+    }
+
+    return Data.getRarityOrder(
+      rarityId
+    ) <
+    Data.getRarityOrder(
+      minimumRarity
+    )
+      ? minimumRarity
+      : rarityId;
   }
 
   function rollRarity(context) {
@@ -355,37 +405,40 @@
     const entries =
       Data.LOOT
         .rarityOrder
-        .map(function (rarityId) {
-          return {
-            id: rarityId,
+        .map(
+          function (rarityId) {
+            return {
+              id: rarityId,
 
-            weight: Math.max(
-              0,
-              finiteNumber(
-                weights[rarityId],
+              weight: Math.max(
                 0,
-                0,
-                999999
+                finiteNumber(
+                  weights[rarityId],
+                  0
+                )
               )
-            )
-          };
-        });
+            };
+          }
+        );
 
-    const totalWeight =
+    const total =
       entries.reduce(
         function (sum, entry) {
-          return sum + entry.weight;
+          return (
+            sum +
+            entry.weight
+          );
         },
         0
       );
 
-    if (totalWeight <= 0) {
+    if (total <= 0) {
       return "common";
     }
 
     let roll =
       Math.random() *
-      totalWeight;
+      total;
 
     for (
       let index = 0;
@@ -396,19 +449,26 @@
         entries[index].weight;
 
       if (roll <= 0) {
-        return entries[index].id;
+        return enforceMinimumRarity(
+          entries[index].id,
+          context &&
+          context.minimumRarity
+        );
       }
     }
 
-    return "common";
+    return enforceMinimumRarity(
+      "common",
+      context &&
+      context.minimumRarity
+    );
   }
 
-  /*
-   * 아이템 레벨은 플레이어 레벨과
-   * 현재 웨이브를 함께 반영한다.
-   */
-  function resolveItemLevel(context) {
-    const source = context || {};
+  function resolveItemLevel(
+    context
+  ) {
+    const source =
+      context || {};
 
     const playerLevel = Math.max(
       1,
@@ -437,25 +497,19 @@
       )
     );
 
-    const waveLevel = Math.max(
-      1,
+    const center = Math.max(
+      playerLevel,
       Math.ceil(wave / 2)
     );
 
-    const centerLevel = Math.max(
-      playerLevel,
-      waveLevel
-    );
-
-    const levelOffset =
+    return Data.clamp(
+      center +
       Data.randomInteger(
         -1,
-        source.isBoss ? 2 : 1
-      );
-
-    return Data.clamp(
-      centerLevel +
-      levelOffset,
+        source.isBoss
+          ? 2
+          : 1
+      ),
       1,
       CONFIG.MAX_LEVEL
     );
@@ -464,7 +518,8 @@
   function rollBaseStats(
     slotId,
     rarityId,
-    itemLevel
+    itemLevel,
+    bossId
   ) {
     const rules =
       SLOT_BASE_STAT_RULES[
@@ -479,28 +534,33 @@
 
     const levelMultiplier =
       1 +
-      (itemLevel - 1) * 0.11;
+      (
+        itemLevel - 1
+      ) * 0.11;
+
+    const bossMultiplier =
+      bossId
+        ? 1.08
+        : 1;
 
     const stats = {};
 
-    rules.forEach(function (rule) {
-      const baseValue =
-        Data.randomRange(
-          rule.min,
-          rule.max
-        );
+    rules.forEach(
+      function (rule) {
+        stats[rule.stat] =
+          roundStatValue(
+            Data.randomRange(
+              rule.min,
+              rule.max
+            ) *
+            levelMultiplier *
+            rarity.statMultiplier *
+            bossMultiplier,
 
-      const finalValue =
-        baseValue *
-        levelMultiplier *
-        rarity.statMultiplier;
-
-      stats[rule.stat] =
-        roundStatValue(
-          finalValue,
-          rule.type
-        );
-    });
+            rule.type
+          );
+      }
+    );
 
     return stats;
   }
@@ -508,17 +568,10 @@
   function getOptionCount(
     rarityId
   ) {
-    const rarity =
+    const range =
       Data.getRarity(
         rarityId
-      );
-
-    const range =
-      Array.isArray(
-        rarity.optionCount
-      )
-        ? rarity.optionCount
-        : [0, 0];
+      ).optionCount || [0, 0];
 
     return Data.randomInteger(
       Number(range[0]) || 0,
@@ -526,41 +579,39 @@
     );
   }
 
-  /*
-   * 동일한 랜덤 옵션이 한 아이템에
-   * 중복되지 않게 생성한다.
-   *
-   * 기본 능력치와 같은 능력치는 허용한다.
-   */
   function rollRandomOptions(
     rarityId,
-    itemLevel
+    itemLevel,
+    bossId
   ) {
     const optionCount =
       getOptionCount(
         rarityId
       );
 
-    if (optionCount <= 0) {
-      return [];
-    }
+    const candidates =
+      Data.ITEM_AFFIXES.slice();
 
     const rarity =
       Data.getRarity(
         rarityId
       );
 
-    const candidates =
-      Data.ITEM_AFFIXES.slice();
-
     const options = [];
 
     const levelMultiplier =
       1 +
-      (itemLevel - 1) * 0.025;
+      (
+        itemLevel - 1
+      ) * 0.025;
+
+    const bossMultiplier =
+      bossId
+        ? 1.1
+        : 1;
 
     while (
-      candidates.length > 0 &&
+      candidates.length &&
       options.length <
       optionCount
     ) {
@@ -576,22 +627,19 @@
           1
         )[0];
 
-      const baseValue =
-        Data.randomRange(
-          affix.min,
-          affix.max
-        );
-
-      const rarityMultiplier =
-        0.88 +
-        rarity.statMultiplier *
-        0.18;
-
       const value =
         roundStatValue(
-          baseValue *
+          Data.randomRange(
+            affix.min,
+            affix.max
+          ) *
           levelMultiplier *
-          rarityMultiplier,
+          (
+            0.88 +
+            rarity.statMultiplier *
+            0.18
+          ) *
+          bossMultiplier,
 
           affix.type
         );
@@ -609,27 +657,27 @@
 
   function buildItemName(
     slotId,
-    rarityId
+    rarityId,
+    bossId
   ) {
-    const prefix =
-      pickRandom(
-        RARITY_PREFIXES[
-          rarityId
-        ] ||
-        RARITY_PREFIXES.common
-      );
+    const prefixes =
+      bossId &&
+      BOSS_PREFIXES[bossId]
+        ? BOSS_PREFIXES[bossId]
+        : RARITY_PREFIXES[
+            rarityId
+          ] ||
+          RARITY_PREFIXES.common;
 
-    const baseName =
+    return [
+      pickRandom(prefixes),
+
       pickRandom(
         Data.ITEM_BASE_NAMES[
           slotId
         ] ||
         Data.ITEM_BASE_NAMES.weapon
-      );
-
-    return [
-      prefix,
-      baseName
+      )
     ]
       .filter(Boolean)
       .join(" ");
@@ -637,54 +685,49 @@
 
   function calculateItemValues(
     rarityId,
-    itemLevel
+    itemLevel,
+    bossId
   ) {
-    const rarityIndex =
-      Math.max(
-        0,
-
-        Data.LOOT
-          .rarityOrder
-          .indexOf(rarityId)
+    const rarity =
+      Data.getRarity(
+        rarityId
       );
 
-    const rarityMultiplier =
-      1 +
-      rarityIndex * 0.9;
+    const bossMultiplier =
+      bossId
+        ? 1.35
+        : 1;
 
-    const sellValue =
-      Math.max(
+    return {
+      sellValue: Math.max(
         1,
         Math.round(
           (
             8 +
             itemLevel * 5
           ) *
-          rarityMultiplier
+          rarity.salvageMultiplier *
+          bossMultiplier
         )
-      );
+      ),
 
-    const salvageValue =
-      Math.max(
+      salvageValue: Math.max(
         1,
         Math.round(
           (
             1 +
             itemLevel * 0.45
           ) *
-          rarityMultiplier
+          rarity.salvageMultiplier *
+          bossMultiplier
         )
-      );
-
-    return {
-      sellValue: sellValue,
-      salvageValue:
-        salvageValue
+      )
     };
   }
 
   function generateItem(context) {
-    const source = context || {};
+    const source =
+      context || {};
 
     const slotId =
       Object.prototype
@@ -698,7 +741,7 @@
             Data.LOOT.slots
           );
 
-    const rarityId =
+    const rolledRarity =
       Object.prototype
         .hasOwnProperty
         .call(
@@ -708,6 +751,12 @@
         ? source.rarity
         : rollRarity(source);
 
+    const rarityId =
+      enforceMinimumRarity(
+        rolledRarity,
+        source.minimumRarity
+      );
+
     const itemLevel =
       resolveItemLevel(
         source
@@ -716,7 +765,8 @@
     const values =
       calculateItemValues(
         rarityId,
-        itemLevel
+        itemLevel,
+        source.bossId
       );
 
     return {
@@ -724,7 +774,8 @@
 
       name: buildItemName(
         slotId,
-        rarityId
+        rarityId,
+        source.bossId
       ),
 
       slot: slotId,
@@ -743,15 +794,18 @@
 
       itemLevel: itemLevel,
       enhancement: 0,
-
       locked: false,
       equipped: false,
+
+      sourceBossId:
+        source.bossId || null,
 
       baseStats:
         rollBaseStats(
           slotId,
           rarityId,
-          itemLevel
+          itemLevel,
+          source.bossId
         ),
 
       bonusStats: {},
@@ -759,7 +813,8 @@
       randomOptions:
         rollRandomOptions(
           rarityId,
-          itemLevel
+          itemLevel,
+          source.bossId
         ),
 
       salvageValue:
@@ -768,63 +823,59 @@
       sellValue:
         values.sellValue,
 
-      acquiredAt: Date.now()
+      acquiredAt:
+        Date.now()
     };
   }
 
-  /*
-   * 몬스터 처치 시 장비 드롭을 판정하고
-   * 획득한 장비를 인벤토리에 저장한다.
-   */
-  function rollDrop(context) {
-    const source = context || {};
+  function storeOrAutoSalvage(
+    item,
+    options
+  ) {
+    const settings =
+      options || {};
 
-    const dropChance =
-      calculateDropChance(
-        source
+    const bypassAuto =
+      Boolean(
+        settings.bypassAutoSalvage
       );
-
-    const roll = Math.random();
 
     if (
-      !source.forceDrop &&
-      roll >= dropChance
+      !bypassAuto &&
+      State.shouldAutoSalvage(
+        item.rarity
+      )
     ) {
-      const missResult = {
-        dropped: false,
+      const salvage =
+        State.salvageExternalItem(
+          item,
+          {
+            reason:
+              settings.reason ||
+              "auto-salvage"
+          }
+        );
+
+      return {
         stored: false,
-        chance: dropChance,
-        roll: roll,
-        item: null,
-        reason: "no-drop"
+        autoSalvaged: true,
+        salvage: salvage,
+        item: clone(item),
+        reason: "auto-salvaged"
       };
-
-      emit(
-        "drop-miss",
-        missResult
-      );
-
-      return missResult;
     }
-
-    const item =
-      generateItem(source);
 
     const storedItem =
       State.addInventoryItem(
         item
       );
 
-    const result = {
-      dropped: true,
-
+    return {
       stored:
         Boolean(storedItem),
 
-      chance:
-        dropChance,
-
-      roll: roll,
+      autoSalvaged: false,
+      salvage: null,
 
       item:
         clone(
@@ -837,11 +888,75 @@
           ? "stored"
           : "inventory-full"
     };
+  }
+
+  function rollDrop(context) {
+    const source =
+      context || {};
+
+    const chance =
+      calculateDropChance(
+        source
+      );
+
+    const roll =
+      Math.random();
+
+    if (
+      !source.forceDrop &&
+      roll >= chance
+    ) {
+      const miss = {
+        dropped: false,
+        stored: false,
+        autoSalvaged: false,
+        chance: chance,
+        roll: roll,
+        item: null,
+        reason: "no-drop"
+      };
+
+      emit(
+        "drop-miss",
+        miss
+      );
+
+      return miss;
+    }
+
+    const item =
+      generateItem(source);
+
+    const processResult =
+      storeOrAutoSalvage(
+        item,
+        {
+          bypassAutoSalvage:
+            source.bypassAutoSalvage,
+
+          reason:
+            source.isBoss
+              ? "boss-drop"
+              : "normal-drop"
+        }
+      );
+
+    const result =
+      Object.assign(
+        {
+          dropped: true,
+          chance: chance,
+          roll: roll
+        },
+        processResult
+      );
 
     emit(
-      storedItem
-        ? "drop-success"
-        : "inventory-full",
+      result.autoSalvaged
+        ? "drop-auto-salvaged"
+        : result.stored
+          ? "drop-success"
+          : "inventory-full",
 
       result
     );
@@ -849,10 +964,85 @@
     return result;
   }
 
-  /*
-   * 아이템의 기본 능력치, 강화 능력치,
-   * 랜덤 옵션을 하나로 합산한다.
-   */
+  function grantBossReward(
+    bossId,
+    options
+  ) {
+    const boss =
+      Data.getBoss(bossId);
+
+    const settings =
+      options || {};
+
+    const firstClear =
+      Boolean(
+        settings.firstClear
+      );
+
+    const rarity =
+      firstClear
+        ? boss
+            .firstClearReward
+            .rarity
+        : null;
+
+    const minimumRarity =
+      firstClear
+        ? boss
+            .firstClearReward
+            .rarity
+        : boss
+            .repeatDrop
+            .minimumRarity;
+
+    const item =
+      generateItem({
+        isBoss: true,
+        bossId: boss.id,
+        wave: boss.unlockWave,
+
+        playerLevel:
+          State.getState()
+            .player.level,
+
+        rarity: rarity,
+
+        minimumRarity:
+          minimumRarity
+      });
+
+    const processed =
+      storeOrAutoSalvage(
+        item,
+        {
+          bypassAutoSalvage:
+            firstClear,
+
+          reason:
+            firstClear
+              ? "boss-first-clear"
+              : "boss-repeat-drop"
+        }
+      );
+
+    const result =
+      Object.assign(
+        {
+          bossId: boss.id,
+          firstClear: firstClear,
+          dropped: true
+        },
+        processed
+      );
+
+    emit(
+      "boss-reward-item",
+      result
+    );
+
+    return result;
+  }
+
   function getItemTotalStats(item) {
     const totals = {};
 
@@ -869,66 +1059,53 @@
       return totals;
     }
 
-    function addStatMap(statMap) {
-      if (
-        !statMap ||
-        typeof statMap !== "object"
-      ) {
-        return;
-      }
+    [
+      item.baseStats,
+      item.bonusStats
+    ].forEach(function (map) {
+      const source =
+        map &&
+        typeof map === "object"
+          ? map
+          : {};
 
       Data.STAT_KEYS.forEach(
         function (key) {
           totals[key] +=
             finiteNumber(
-              statMap[key],
+              source[key],
               0,
               -999999999,
               999999999
             );
         }
       );
-    }
+    });
 
-    addStatMap(
-      item.baseStats
-    );
-
-    addStatMap(
-      item.bonusStats
-    );
-
-    if (
-      Array.isArray(
-        item.randomOptions
-      )
-    ) {
-      item.randomOptions.forEach(
-        function (option) {
-          if (
-            option &&
-            Data.STAT_KEYS.includes(
-              option.stat
-            )
-          ) {
-            totals[option.stat] +=
-              finiteNumber(
-                option.value,
-                0,
-                -999999999,
-                999999999
-              );
-          }
+    (
+      item.randomOptions || []
+    ).forEach(
+      function (option) {
+        if (
+          option &&
+          Data.STAT_KEYS.includes(
+            option.stat
+          )
+        ) {
+          totals[option.stat] +=
+            finiteNumber(
+              option.value,
+              0,
+              -999999999,
+              999999999
+            );
         }
-      );
-    }
+      }
+    );
 
     return totals;
   }
 
-  /*
-   * state.js와 동일한 장비 점수를 사용한다.
-   */
   function getItemScore(item) {
     if (
       !item ||
@@ -966,7 +1143,7 @@
         item.enhancement,
         0,
         0,
-        99
+        CONFIG.MAX_ENHANCEMENT
       ) * 12;
 
     return Math.max(
@@ -980,14 +1157,10 @@
     equipped
   ) {
     const candidateScore =
-      getItemScore(
-        candidate
-      );
+      getItemScore(candidate);
 
     const equippedScore =
-      getItemScore(
-        equipped
-      );
+      getItemScore(equipped);
 
     const difference =
       candidateScore -
@@ -1012,17 +1185,12 @@
   }
 
   function compareWithEquipped(item) {
-    if (!item) {
-      return compareItems(
-        null,
-        null
-      );
-    }
-
     const equipped =
-      State.getEquippedItem(
-        item.slot
-      );
+      item
+        ? State.getEquippedItem(
+            item.slot
+          )
+        : null;
 
     const comparison =
       compareItems(
@@ -1034,18 +1202,13 @@
       equipped;
 
     comparison.slot =
-      item.slot;
+      item
+        ? item.slot
+        : null;
 
     return comparison;
   }
 
-  /*
-   * ratio:
-   * 0.05 → 5.0%
-   *
-   * flat:
-   * 12.34 → 12.3
-   */
   function formatStatValue(
     value,
     type
@@ -1062,8 +1225,7 @@
       return (
         Math.round(
           numeric * 1000
-        ) /
-        10
+        ) / 10
       ).toFixed(1) + "%";
     }
 
@@ -1074,9 +1236,6 @@
     );
   }
 
-  /*
-   * 아이템 상세 화면에서 표시할 기본 능력치 목록
-   */
   function getBaseStatRows(item) {
     if (
       !item ||
@@ -1108,123 +1267,109 @@
               0
             ),
 
-          type:
-            meta.type,
+          type: meta.type,
 
           formattedValue:
             formatStatValue(
               item.baseStats[key],
               meta.type
-            )
+            ),
+
+          source: "base"
         };
       });
   }
 
-  /*
-   * 강화 능력치와 랜덤 옵션 표시 목록
-   */
   function getBonusStatRows(item) {
     const rows = [];
 
-    if (
-      item &&
-      item.bonusStats
-    ) {
-      Data.STAT_KEYS.forEach(
-        function (key) {
-          const value =
+    if (!item) {
+      return rows;
+    }
+
+    Data.STAT_KEYS.forEach(
+      function (key) {
+        const value =
+          finiteNumber(
+            item.bonusStats &&
+            item.bonusStats[key],
+            0
+          );
+
+        if (!value) {
+          return;
+        }
+
+        const meta =
+          Data.getStatMeta(key);
+
+        rows.push({
+          stat: key,
+
+          name:
+            meta.name +
+            " (강화)",
+
+          value: value,
+          type: meta.type,
+
+          formattedValue:
+            formatStatValue(
+              value,
+              meta.type
+            ),
+
+          source: "enhancement"
+        });
+      }
+    );
+
+    (
+      item.randomOptions || []
+    ).forEach(
+      function (option) {
+        if (!option) {
+          return;
+        }
+
+        const meta =
+          Data.getStatMeta(
+            option.stat
+          );
+
+        const type =
+          option.type ||
+          meta.type;
+
+        rows.push({
+          stat: option.stat,
+
+          name:
+            option.name ||
+            meta.name,
+
+          value:
             finiteNumber(
-              item.bonusStats[key],
+              option.value,
               0
-            );
+            ),
 
-          if (value === 0) {
-            return;
-          }
+          type: type,
 
-          const meta =
-            Data.getStatMeta(key);
+          formattedValue:
+            formatStatValue(
+              option.value,
+              type
+            ),
 
-          rows.push({
-            stat: key,
-            name: meta.name,
-            value: value,
-            type: meta.type,
-
-            formattedValue:
-              formatStatValue(
-                value,
-                meta.type
-              ),
-
-            source:
-              "enhancement"
-          });
-        }
-      );
-    }
-
-    if (
-      item &&
-      Array.isArray(
-        item.randomOptions
-      )
-    ) {
-      item.randomOptions.forEach(
-        function (option) {
-          if (!option) {
-            return;
-          }
-
-          const meta =
-            Data.getStatMeta(
-              option.stat
-            );
-
-          const type =
-            option.type ||
-            meta.type;
-
-          rows.push({
-            stat:
-              option.stat,
-
-            name:
-              option.name ||
-              meta.name,
-
-            value:
-              finiteNumber(
-                option.value,
-                0
-              ),
-
-            type: type,
-
-            formattedValue:
-              formatStatValue(
-                option.value,
-                type
-              ),
-
-            source:
-              "random"
-          });
-        }
-      );
-    }
+          source: "random"
+        });
+      }
+    );
 
     return rows;
   }
 
-  /*
-   * 인벤토리 정렬
-   *
-   * newest: 획득 시간
-   * score: 장비 점수
-   * rarity: 장비 등급
-   * level: 아이템 레벨
-   */
   function sortItems(
     items,
     sortId
@@ -1234,7 +1379,7 @@
         ? items.slice()
         : [];
 
-    const selectedSort =
+    const selected =
       CONFIG
         .INVENTORY_SORT_OPTIONS
         .includes(sortId)
@@ -1244,25 +1389,21 @@
     result.sort(
       function (left, right) {
         if (
-          selectedSort ===
-          "score"
+          selected === "score"
         ) {
-          const scoreDifference =
+          const difference =
             getItemScore(right) -
             getItemScore(left);
 
-          if (
-            scoreDifference !== 0
-          ) {
-            return scoreDifference;
+          if (difference) {
+            return difference;
           }
         }
 
         if (
-          selectedSort ===
-          "rarity"
+          selected === "rarity"
         ) {
-          const rarityDifference =
+          const difference =
             Data.getRarityOrder(
               right.rarity
             ) -
@@ -1270,18 +1411,15 @@
               left.rarity
             );
 
-          if (
-            rarityDifference !== 0
-          ) {
-            return rarityDifference;
+          if (difference) {
+            return difference;
           }
         }
 
         if (
-          selectedSort ===
-          "level"
+          selected === "level"
         ) {
-          const levelDifference =
+          const difference =
             finiteNumber(
               right.itemLevel,
               1
@@ -1291,10 +1429,8 @@
               1
             );
 
-          if (
-            levelDifference !== 0
-          ) {
-            return levelDifference;
+          if (difference) {
+            return difference;
           }
         }
 
@@ -1314,17 +1450,97 @@
     return result;
   }
 
+  function sortForgeItems(
+    items,
+    sortId
+  ) {
+    const result =
+      Array.isArray(items)
+        ? items.slice()
+        : [];
+
+    const selected =
+      CONFIG
+        .FORGE_SORT_OPTIONS
+        .includes(sortId)
+        ? sortId
+        : "score";
+
+    result.sort(
+      function (left, right) {
+        if (
+          selected ===
+          "enhancement"
+        ) {
+          const difference =
+            finiteNumber(
+              right.enhancement,
+              0
+            ) -
+            finiteNumber(
+              left.enhancement,
+              0
+            );
+
+          if (difference) {
+            return difference;
+          }
+        }
+
+        if (
+          selected === "rarity"
+        ) {
+          const difference =
+            Data.getRarityOrder(
+              right.rarity
+            ) -
+            Data.getRarityOrder(
+              left.rarity
+            );
+
+          if (difference) {
+            return difference;
+          }
+        }
+
+        if (
+          selected === "level"
+        ) {
+          const difference =
+            finiteNumber(
+              right.itemLevel,
+              1
+            ) -
+            finiteNumber(
+              left.itemLevel,
+              1
+            );
+
+          if (difference) {
+            return difference;
+          }
+        }
+
+        return (
+          getItemScore(right) -
+          getItemScore(left)
+        );
+      }
+    );
+
+    return result;
+  }
+
   function filterItems(
     items,
     slotFilter,
     rarityFilter
   ) {
-    const source =
+    return (
       Array.isArray(items)
         ? items
-        : [];
-
-    return source.filter(
+        : []
+    ).filter(
       function (item) {
         const slotMatches =
           !slotFilter ||
@@ -1345,46 +1561,57 @@
     );
   }
 
-  /*
-   * 현재 저장된 인벤토리 설정을 기준으로
-   * UI에서 표시할 장비 배열을 반환한다.
-   */
-  function getVisibleInventory(options) {
+  function getVisibleInventory(
+    options
+  ) {
     const settings =
       State.getState().settings;
 
     const source =
       options || {};
 
-    const slotFilter =
-      source.slotFilter ||
-      settings
-        .inventorySlotFilter ||
-      "all";
-
-    const rarityFilter =
-      source.rarityFilter ||
-      settings
-        .inventoryRarityFilter ||
-      "all";
-
-    const sortId =
-      source.sort ||
-      settings.inventorySort ||
-      "newest";
-
-    const filtered =
+    return sortItems(
       filterItems(
         State.getState()
           .inventory,
 
-        slotFilter,
-        rarityFilter
-      );
+        source.slotFilter ||
+        settings
+          .inventorySlotFilter ||
+        "all",
 
+        source.rarityFilter ||
+        settings
+          .inventoryRarityFilter ||
+        "all"
+      ),
+
+      source.sort ||
+      settings.inventorySort ||
+      "newest"
+    );
+  }
+
+  function getForgeItems(sortId) {
+    return sortForgeItems(
+      State.getAllItems(),
+
+      sortId ||
+      State.getState()
+        .forge.sort ||
+      "score"
+    );
+  }
+
+  function getSalvageableItems() {
     return sortItems(
-      filtered,
-      sortId
+      State.getState()
+        .inventory
+        .filter(function (item) {
+          return !item.locked;
+        }),
+
+      "rarity"
     );
   }
 
@@ -1406,10 +1633,41 @@
     ];
   }
 
+  function getNextForgeSort(
+    sortId
+  ) {
+    const options =
+      CONFIG
+        .FORGE_SORT_OPTIONS;
+
+    const index =
+      options.indexOf(sortId);
+
+    return options[
+      index < 0
+        ? 0
+        : (
+            index + 1
+          ) %
+          options.length
+    ];
+  }
+
   function getSortLabel(sortId) {
     return (
       SORT_LABELS[sortId] ||
       SORT_LABELS.newest
+    );
+  }
+
+  function getForgeSortLabel(
+    sortId
+  ) {
+    return (
+      FORGE_SORT_LABELS[
+        sortId
+      ] ||
+      FORGE_SORT_LABELS.score
     );
   }
 
@@ -1427,6 +1685,9 @@
 
     rollDrop:
       rollDrop,
+
+    grantBossReward:
+      grantBossReward,
 
     getItemTotalStats:
       getItemTotalStats,
@@ -1452,16 +1713,31 @@
     sortItems:
       sortItems,
 
+    sortForgeItems:
+      sortForgeItems,
+
     filterItems:
       filterItems,
 
     getVisibleInventory:
       getVisibleInventory,
 
+    getForgeItems:
+      getForgeItems,
+
+    getSalvageableItems:
+      getSalvageableItems,
+
     getNextSort:
       getNextSort,
 
+    getNextForgeSort:
+      getNextForgeSort,
+
     getSortLabel:
-      getSortLabel
+      getSortLabel,
+
+    getForgeSortLabel:
+      getForgeSortLabel
   };
 })(window);
