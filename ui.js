@@ -19,6 +19,9 @@
   const MONSTER_ATTACK_DURATION = 0.24;
   const HIT_DURATION = 0.28;
   const FIELD_SHAKE_DURATION = 0.2;
+  const BOSS_SMASH_DURATION = 0.36;
+  const BOSS_GUARD_FLASH_DURATION = 0.72;
+  const BOSS_ULTIMATE_DURATION = 0.92;
   const el = {};
   const cleanups = [];
   const effects = {
@@ -33,6 +36,9 @@
     bossPlayerHit: 0,
     bossHit: 0,
     bossWarning: 0,
+    bossSmash: 0,
+    bossGuard: 0,
+    bossUltimate: 0,
     texts: [],
     bossTexts: [],
     particles: [],
@@ -56,15 +62,11 @@
   let audioUnlocked = false;
 
   function getElement(id) {
-    const node = document.getElementById(id);
-    if (!node) {
-      throw new Error("Missing UI element #" + id);
-    }
-    return node;
+    return document.getElementById(id);
   }
 
   function cacheElements() {
-    [
+    const requiredIds = [
       "goldAmount",
       "enhancementStoneAmount",
       "settingsButton",
@@ -155,6 +157,7 @@
       "autoSalvageEpic",
       "autoSalvageLegendary",
       "bossView",
+      "bossSelectPanel",
       "bossRegionName",
       "bossUnlockText",
       "bossBestTime",
@@ -240,9 +243,18 @@
       "reducedEffectsToggle",
       "damageNumbersToggle",
       "toastContainer"
-    ].forEach(function (id) {
-      el[id] = getElement(id);
+    ];
+    const missingIds = [];
+    requiredIds.forEach(function (id) {
+      const node = getElement(id);
+      if (!node) {
+        missingIds.push(id);
+      }
+      el[id] = node;
     });
+    if (missingIds.length > 0) {
+      throw new Error("Missing UI elements: #" + missingIds.join(", #"));
+    }
     el.speedButtons = Array.from(document.querySelectorAll(".speed-button"));
     el.viewTabs = Array.from(document.querySelectorAll(".view-tab[data-view]"));
     el.forgeTabButtons = Array.from(document.querySelectorAll(".forge-sub-tab[data-forge-panel]"));
@@ -413,8 +425,13 @@
       enhanceSuccess: [880, 0.16, "sine", 0.14],
       enhanceFail: [160, 0.14, "triangle", 0.12],
       salvage: [300, 0.11, "square", 0.1],
-      warning: [90, 0.22, "sawtooth", 0.15],
-      bossKill: [640, 0.24, "sine", 0.18],
+      warning: [96, 0.18, "sawtooth", 0.13],
+      bossSmash: [340, 0.08, "square", 0.1],
+      guard: [520, 0.1, "triangle", 0.09],
+      potion: [720, 0.11, "sine", 0.08],
+      ultimate: [980, 0.28, "sawtooth", 0.17],
+      guardBlock: [420, 0.075, "triangle", 0.075],
+      bossKill: [640, 0.24, "sine", 0.16],
       tap: [440, 0.035, "sine", 0.05]
     };
     const spec = table[type] || table.tap;
@@ -1065,6 +1082,7 @@
       return State.isBossUnlocked(entry.id);
     });
     el.bossReadyBadge.hidden = !anyReady;
+    el.bossSelectPanel.hidden = runtime.active || Boolean(runtime.result && !bossResultDismissed);
     el.bossBattlePanel.hidden = !runtime.active && (!runtime.result || bossResultDismissed);
     renderBossBattle(runtime);
   }
@@ -1089,14 +1107,17 @@
     }
     el.bossTimeText.textContent = runtime.timeRemaining.toFixed(1);
     el.bossWarningOverlay.hidden = !runtime.warningActive;
+    el.bossBattlePanel.classList.toggle("warning-active", runtime.warningActive);
+    el.bossBattlePanel.classList.toggle("guard-active", runtime.guardTimer > 0);
     el.ultimateGaugeText.textContent = Math.floor(runtime.ultimateGauge) + "%";
     setBar(el.ultimateGaugeFill, runtime.ultimateGauge, 100);
-    renderSkillButton(el.bossSmashButton, el.bossSmashCooldown, runtime.cooldowns.smash, "준비");
-    renderSkillButton(el.bossGuardButton, el.bossGuardCooldown, runtime.cooldowns.guard, runtime.guardTimer > 0 ? "방어 중" : "준비");
-    renderSkillButton(el.bossPotionButton, el.bossPotionCount, runtime.cooldowns.potion, runtime.potionUses + "회 남음");
+    renderSkillButton(el.bossSmashButton, el.bossSmashCooldown, runtime.cooldowns.smash, "준비", Data.BOSS_SKILLS.smash.cooldown);
+    renderSkillButton(el.bossGuardButton, el.bossGuardCooldown, runtime.cooldowns.guard, runtime.guardTimer > 0 ? "방어 중" : "준비", Data.BOSS_SKILLS.guard.cooldown, runtime.guardTimer > 0);
+    renderSkillButton(el.bossPotionButton, el.bossPotionCount, runtime.cooldowns.potion, runtime.potionUses + "회 남음", Data.BOSS_SKILLS.potion.cooldown);
     el.bossPotionButton.disabled = !runtime.active || runtime.potionUses <= 0 || runtime.cooldowns.potion > 0 || player.currentHp >= player.maxHp;
     el.bossUltimateButton.disabled = !runtime.active || runtime.ultimateGauge < 100;
     el.bossUltimateStatus.textContent = runtime.ultimateGauge >= 100 ? "준비" : "게이지 부족";
+    el.bossUltimateButton.classList.toggle("ready", runtime.active && runtime.ultimateGauge >= 100);
     el.bossResultOverlay.hidden = true;
     if (runtime.result && !bossResultDismissed) {
       el.bossResultOverlay.hidden = false;
@@ -1108,13 +1129,16 @@
     }
   }
 
-  function renderSkillButton(button, label, cooldown, readyText) {
+  function renderSkillButton(button, label, cooldown, readyText, maxCooldown, activeState) {
     const active = cooldown > 0;
     button.disabled = active || !Combat.getRuntimeSnapshot().bossBattle.active;
+    button.classList.toggle("cooling", active);
+    button.classList.toggle("active-state", Boolean(activeState));
     label.textContent = active ? cooldown.toFixed(1) + "초" : readyText;
     const mask = button.querySelector(".cooldown-mask");
     if (mask) {
-      mask.style.transform = active ? "scaleY(1)" : "scaleY(0)";
+      const ratio = active && maxCooldown ? clamp01(cooldown / maxCooldown) : 0;
+      mask.style.transform = "scaleY(" + ratio.toFixed(3) + ")";
     }
   }
 
@@ -1272,6 +1296,103 @@
     context.beginPath();
     context.arc(x, y, 24 + progress * 82, 0, Math.PI * 2);
     context.stroke();
+    context.restore();
+  }
+
+  function drawBossTelegraph(context, runtime) {
+    if (!runtime.warningActive || !runtime.boss) {
+      return;
+    }
+    const duration = Math.max(0.1, runtime.boss.pattern.warningDuration || 1);
+    const remain = clamp01(runtime.warningTimer / duration);
+    const pulse = 0.5 + Math.sin(effects.time * 18) * 0.5;
+    context.save();
+    context.globalAlpha = 0.28 + pulse * 0.18;
+    context.strokeStyle = "#ff6f79";
+    context.lineWidth = 8;
+    context.beginPath();
+    context.ellipse(WIDTH * 0.24, HEIGHT * 0.6, 120 - remain * 34, 52 - remain * 12, 0, 0, Math.PI * 2);
+    context.stroke();
+    context.globalAlpha = 0.16 + pulse * 0.12;
+    context.fillStyle = "#ff304f";
+    context.beginPath();
+    context.ellipse(WIDTH * 0.24, HEIGHT * 0.6, 96, 42, 0, 0, Math.PI * 2);
+    context.fill();
+    context.globalAlpha = 0.9;
+    context.fillStyle = "#fff4f5";
+    context.font = "900 34px system-ui, sans-serif";
+    context.textAlign = "center";
+    context.lineWidth = 5;
+    context.strokeStyle = "rgba(0,0,0,0.8)";
+    const label = remain <= 0.34 ? "방어!" : runtime.boss.pattern.name;
+    context.strokeText(label, WIDTH * 0.5, HEIGHT * 0.18);
+    context.fillText(label, WIDTH * 0.5, HEIGHT * 0.18);
+    context.restore();
+  }
+
+  function drawGuardShield(context, x, y, runtime) {
+    const guardActive = runtime.guardTimer > 0;
+    const flashActive = effects.bossGuard > 0;
+    if (!guardActive && !flashActive) {
+      return;
+    }
+    const flash = clamp01(effects.bossGuard / BOSS_GUARD_FLASH_DURATION);
+    const timerRatio = guardActive ? clamp01(runtime.guardTimer / Data.BOSS_SKILLS.guard.duration) : 0;
+    const pulse = Math.abs(Math.sin(effects.time * 9));
+    context.save();
+    context.globalAlpha = 0.28 + Math.max(flash, timerRatio) * 0.34;
+    context.strokeStyle = "#8cf0ff";
+    context.lineWidth = 7 + flash * 6;
+    context.beginPath();
+    context.ellipse(x, y + 5, 94 + pulse * 8, 132 + pulse * 10, 0, 0, Math.PI * 2);
+    context.stroke();
+    context.globalAlpha = 0.12 + flash * 0.16;
+    context.fillStyle = "#8cf0ff";
+    context.beginPath();
+    context.ellipse(x, y + 5, 86, 124, 0, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  }
+
+  function drawBossSmashFlash(context) {
+    if (effects.bossSmash <= 0) {
+      return;
+    }
+    const progress = 1 - clamp01(effects.bossSmash / BOSS_SMASH_DURATION);
+    drawImpactRing(context, WIDTH * 0.72, HEIGHT * 0.46, progress, "#ffd36a");
+    context.save();
+    context.globalAlpha = Math.max(0, 1 - progress) * 0.58;
+    context.strokeStyle = "#ffd36a";
+    context.lineWidth = 12;
+    context.lineCap = "round";
+    context.beginPath();
+    context.moveTo(WIDTH * 0.42, HEIGHT * 0.36);
+    context.lineTo(WIDTH * 0.76, HEIGHT * 0.58);
+    context.stroke();
+    context.restore();
+  }
+
+  function drawUltimateStrike(context) {
+    if (effects.bossUltimate <= 0) {
+      return;
+    }
+    const progress = 1 - clamp01(effects.bossUltimate / BOSS_ULTIMATE_DURATION);
+    const alpha = Math.max(0, 1 - progress);
+    context.save();
+    context.globalAlpha = alpha;
+    const beam = context.createLinearGradient(WIDTH * 0.22, HEIGHT * 0.4, WIDTH * 0.76, HEIGHT * 0.43);
+    beam.addColorStop(0, "rgba(140,240,255,0.2)");
+    beam.addColorStop(0.45, "rgba(255,230,109,0.9)");
+    beam.addColorStop(1, "rgba(255,111,121,0.65)");
+    context.strokeStyle = beam;
+    context.lineWidth = 24 - progress * 10;
+    context.lineCap = "round";
+    context.beginPath();
+    context.moveTo(WIDTH * 0.27, HEIGHT * 0.5);
+    context.lineTo(WIDTH * 0.75, HEIGHT * 0.43);
+    context.stroke();
+    context.globalAlpha = alpha * 0.85;
+    drawImpactRing(context, WIDTH * 0.74, HEIGHT * 0.42, progress, "#ffe66d");
     context.restore();
   }
 
@@ -1461,6 +1582,7 @@
     if (!ctx) {
       return;
     }
+    resizeCanvas();
     const delta = Math.min(0.1, Math.max(0, Number(deltaSeconds) || 0));
     effects.time += delta;
     effects.playerAttack = Math.max(0, effects.playerAttack - delta);
@@ -1493,10 +1615,14 @@
     if (!bossCtx) {
       return;
     }
+    resizeCanvas();
     const delta = Math.min(0.1, Math.max(0, Number(deltaSeconds) || 0));
     effects.bossPlayerHit = Math.max(0, effects.bossPlayerHit - delta);
     effects.bossHit = Math.max(0, effects.bossHit - delta);
     effects.bossWarning = Math.max(0, effects.bossWarning - delta);
+    effects.bossSmash = Math.max(0, effects.bossSmash - delta);
+    effects.bossGuard = Math.max(0, effects.bossGuard - delta);
+    effects.bossUltimate = Math.max(0, effects.bossUltimate - delta);
     effects.fieldShake = Math.max(0, effects.fieldShake - delta);
     const state = State.getState();
     const region = Data.getRegion(state.progression.currentRegionId);
@@ -1507,8 +1633,12 @@
     bossCtx.setTransform(bossCanvas.width / WIDTH, 0, 0, bossCanvas.height / HEIGHT, 0, 0);
     bossCtx.translate(shake.x, shake.y);
     drawBackground(bossCtx, region, runtime.warningActive);
+    drawBossTelegraph(bossCtx, runtime);
     drawPlayer(bossCtx, WIDTH * 0.24, HEIGHT * 0.58, effects.bossPlayerHit, effects.playerAttack);
     drawEnemy(bossCtx, boss, WIDTH * 0.72, HEIGHT * 0.55, effects.bossHit, effects.monsterAttack);
+    drawGuardShield(bossCtx, WIDTH * 0.24, HEIGHT * 0.58, runtime);
+    drawBossSmashFlash(bossCtx);
+    drawUltimateStrike(bossCtx);
     if (runtime.warningActive) {
       const warningAlpha = 0.14 + Math.abs(Math.sin(effects.time * 12)) * 0.12;
       bossCtx.fillStyle = "rgba(255,80,90," + warningAlpha.toFixed(3) + ")";
@@ -1648,12 +1778,19 @@
     } else if (event.type === "boss-damage") {
       effects.playerAttack = PLAYER_ATTACK_DURATION;
       effects.bossHit = HIT_DURATION;
-      addImpactBurst(effects.bossParticles, WIDTH * 0.7, HEIGHT * 0.5, payload.critical || payload.source === "ultimate" ? "#ffe66d" : "#d8f7ff", payload.critical || payload.source === "ultimate");
-      playSound(payload.source === "ultimate" ? "crit" : payload.critical ? "crit" : "attack");
+      if (payload.source === "smash") {
+        effects.bossSmash = BOSS_SMASH_DURATION;
+      }
+      addImpactBurst(effects.bossParticles, WIDTH * 0.7, HEIGHT * 0.5, payload.critical || payload.source === "ultimate" || payload.source === "smash" ? "#ffe66d" : "#d8f7ff", payload.critical || payload.source === "ultimate" || payload.source === "smash");
+      playSound(payload.source === "ultimate" ? "ultimate" : payload.source === "smash" ? "bossSmash" : payload.critical ? "crit" : "attack");
       if (payload.source === "ultimate") {
+        effects.bossUltimate = BOSS_ULTIMATE_DURATION;
         triggerFieldShake(true);
-        vibrate([20, 20, 35]);
+        vibrate([18, 24, 38, 24, 48]);
         screenShake(true);
+      } else if (payload.source === "smash") {
+        triggerFieldShake(true);
+        vibrate([12, 18]);
       } else if (payload.critical) {
         triggerFieldShake(true);
       }
@@ -1662,20 +1799,25 @@
       effects.monsterAttack = MONSTER_ATTACK_DURATION;
       effects.bossPlayerHit = HIT_DURATION;
       addImpactBurst(effects.bossParticles, WIDTH * 0.25, HEIGHT * 0.51, payload.guarded ? "#8cf0ff" : "#ff8b94", !payload.guarded);
-      playSound("hit");
-      vibrate(payload.guarded ? 8 : 24);
+      playSound(payload.guarded ? "guardBlock" : "hit");
+      vibrate(payload.guarded ? [8, 16] : [18, 26]);
       if (!payload.guarded) {
         triggerFieldShake(true);
         screenShake(false);
+      } else {
+        effects.bossGuard = BOSS_GUARD_FLASH_DURATION;
+        triggerFieldShake(false);
       }
       addDamageText(effects.bossTexts, "-" + payload.damage, WIDTH * 0.24, HEIGHT * 0.32, false, payload.guarded ? "#8cf0ff" : "#ff8b94");
     } else if (event.type === "boss-warning") {
-      effects.bossWarning = 0.55;
+      effects.bossWarning = 0.75;
       triggerFieldShake(true);
       playSound("warning");
-      vibrate([20, 30, 20]);
+      vibrate([18, 28, 18]);
       screenShake(true);
       showToast("위험 공격 예고. 방어를 사용하세요.", "error");
+    } else if (event.type === "boss-warning-end") {
+      effects.bossWarning = 0;
     } else if (event.type === "boss-end") {
       bossListDirty = true;
       inventoryDirty = true;
@@ -1693,8 +1835,20 @@
         }
       }
     } else if (event.type === "boss-skill") {
-      if (payload.skill === "potion") {
+      if (payload.skill === "guard") {
+        effects.bossGuard = BOSS_GUARD_FLASH_DURATION;
+        playSound("guard");
+        vibrate([10, 16]);
+        addDamageText(effects.bossTexts, "방어", WIDTH * 0.24, HEIGHT * 0.27, false, "#8cf0ff");
+      } else if (payload.skill === "potion") {
+        playSound("potion");
+        vibrate(10);
         showToast("물약으로 체력 " + payload.healed + " 회복.", "success");
+        addDamageText(effects.bossTexts, "+" + payload.healed, WIDTH * 0.24, HEIGHT * 0.28, false, "#65df9a");
+      } else if (payload.skill === "smash") {
+        showToast("강타 적중: " + payload.damage, "success");
+      } else if (payload.skill === "ultimate") {
+        showToast("궁극기 적중: " + payload.damage, "success");
       }
     }
   }
@@ -2122,6 +2276,9 @@
     effects.bossPlayerHit = 0;
     effects.bossHit = 0;
     effects.bossWarning = 0;
+    effects.bossSmash = 0;
+    effects.bossGuard = 0;
+    effects.bossUltimate = 0;
     effects.texts = [];
     effects.bossTexts = [];
     effects.particles = [];
