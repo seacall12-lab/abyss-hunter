@@ -22,7 +22,7 @@ Abyss Hunter는 모바일 세로 화면을 우선으로 만든 자동 사냥 웹
 
 ## 현재 버전
 
-- gameVersion: `0.5.8`
+- gameVersion: `0.5.9`
 - saveVersion: `5`
 - 상태: v0.5 개발 중
 
