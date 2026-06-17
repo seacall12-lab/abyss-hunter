@@ -28,8 +28,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#080d18">
   <meta name="description" content="Abyss Hunter 모바일 웹 RPG">
-  <title>Abyss Hunter v0.5.8</title>
-    <link rel="stylesheet" href="style.css?v=0.5.8">
+  <title>Abyss Hunter v0.5.9</title>
+    <link rel="stylesheet" href="style.css?v=0.5.9">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -50,6 +50,7 @@
       </div>
       <div class="top-actions">
         <button id="settingsButton" class="icon-button" type="button" aria-label="설정">설</button>
+        <button id="fullscreenButton" class="icon-button" type="button" aria-label="전체화면">확</button>
         <button id="pauseButton" class="icon-button" type="button" aria-label="일시정지">정지</button>
         <button id="resetButton" class="icon-button danger" type="button" aria-label="초기화">초</button>
       </div>
@@ -115,7 +116,7 @@
             </div>
           </div>
           <div id="battlefield" class="battlefield">
-            <canvas id="gameCanvas" width="720" height="720" aria-label="사냥 전투 화면"></canvas>
+            <canvas id="gameCanvas" width="1280" height="720" aria-label="사냥 전투 화면"></canvas>
             <div id="pauseOverlay" class="pause-overlay" hidden>
               <strong>일시정지</strong>
               <span>자동 전투가 멈췄습니다.</span>
@@ -216,6 +217,7 @@
       </div>
 
       <div id="equipmentView" class="game-view" data-view-panel="equipment" hidden>
+        <button class="menu-close-button" type="button" data-close-menu aria-label="전투 화면으로 돌아가기">닫기</button>
         <section class="equipment-overview panel">
           <div class="equipment-header">
             <div>
@@ -254,6 +256,7 @@
       </div>
 
       <div id="forgeView" class="game-view" data-view-panel="forge" hidden>
+        <button class="menu-close-button" type="button" data-close-menu aria-label="전투 화면으로 돌아가기">닫기</button>
         <section class="forge-summary panel">
           <div>
             <p class="eyebrow">대장간</p>
@@ -352,6 +355,7 @@
 
       <div id="bossView" class="game-view" data-view-panel="boss" hidden>
         <section id="bossSelectPanel" class="boss-select-panel panel">
+          <button class="menu-close-button" type="button" data-close-menu aria-label="전투 화면으로 돌아가기">닫기</button>
           <div class="boss-select-header">
             <div>
               <p class="eyebrow">지역 보스</p>
@@ -371,7 +375,7 @@
             <div class="boss-timer"><span>시간</span><strong id="bossTimeText">60.0</strong></div>
           </div>
           <div class="boss-battlefield">
-            <canvas id="bossCanvas" width="720" height="720" aria-label="보스 전투 화면"></canvas>
+            <canvas id="bossCanvas" width="1280" height="720" aria-label="보스 전투 화면"></canvas>
             <div id="bossWarningOverlay" class="boss-warning-overlay" hidden><span>!</span><strong id="bossWarningText">위험 공격</strong><small>지금 방어하세요.</small></div>
             <div id="bossResultOverlay" class="boss-result-overlay" hidden>
               <p id="bossResultEyebrow" class="eyebrow">전투 결과</p>
@@ -400,9 +404,14 @@
     </main>
 
     <footer class="footer-note">
-      <span>Abyss Hunter v0.5.8</span>
+      <span>Abyss Hunter v0.5.9</span>
       <span>브라우저 자동 저장</span>
     </footer>
+  </div>
+
+  <div class="orientation-guard" aria-hidden="true">
+    <strong>화면을 가로로 돌려주세요</strong>
+    <span>Abyss Hunter는 모바일 가로 화면에 맞춰 표시됩니다.</span>
   </div>
 
   <div id="statsSheetOverlay" class="utility-sheet-overlay" hidden>
@@ -541,12 +550,12 @@
     <div class="noscript-warning">이 게임은 JavaScript가 필요합니다.</div>
   </noscript>
 
-    <script src="content-data.js?v=0.5.8"></script>
-    <script src="data.js?v=0.5.8"></script>
-    <script src="state.js?v=0.5.8"></script>
-    <script src="combat.js?v=0.5.8"></script>
-    <script src="loot.js?v=0.5.8"></script>
-    <script src="ui.js?v=0.5.8"></script>
-    <script src="main.js?v=0.5.8"></script>
+    <script src="content-data.js?v=0.5.9"></script>
+    <script src="data.js?v=0.5.9"></script>
+    <script src="state.js?v=0.5.9"></script>
+    <script src="combat.js?v=0.5.9"></script>
+    <script src="loot.js?v=0.5.9"></script>
+    <script src="ui.js?v=0.5.9"></script>
+    <script src="main.js?v=0.5.9"></script>
 </body>
 </html>
