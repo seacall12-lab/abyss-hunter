@@ -146,8 +146,18 @@
     gap: 6px;
   }
 
+  #bossBattlePanel .boss-battlefield {
+    width: min(100%, clamp(170px, calc(100dvh - 600px), 260px));
+  }
+
   #bossBattlePanel .boss-status-grid article {
     padding: 8px;
+  }
+
+  #bossBattlePanel .combatant-title {
+    display: grid;
+    gap: 2px;
+    justify-items: start;
   }
 
   .boss-skill-button {
