@@ -520,3 +520,4 @@
     getForgeSortLabel: getForgeSortLabel
   };
 })(window);
+  
