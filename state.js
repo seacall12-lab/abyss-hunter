@@ -1516,6 +1516,46 @@
     return currentState.forge.salvageSelectedIds.slice();
   }
 
+  function normalizeSalvageFilter(filter) {
+    const source = filter && typeof filter === "object" ? filter : {};
+    const rarity = Object.prototype.hasOwnProperty.call(Data.RARITIES, source.rarity) ? source.rarity : "all";
+    let minLevel = Math.floor(Number(source.minLevel));
+    let maxLevel = Math.floor(Number(source.maxLevel));
+    minLevel = Number.isFinite(minLevel) ? Math.min(CONFIG.MAX_LEVEL, Math.max(1, minLevel)) : 1;
+    maxLevel = Number.isFinite(maxLevel) ? Math.min(CONFIG.MAX_LEVEL, Math.max(1, maxLevel)) : CONFIG.MAX_LEVEL;
+    if (minLevel > maxLevel) {
+      const previousMin = minLevel;
+      minLevel = maxLevel;
+      maxLevel = previousMin;
+    }
+    return {
+      rarity: rarity,
+      minLevel: minLevel,
+      maxLevel: maxLevel
+    };
+  }
+
+  function matchesSalvageFilter(item, filter) {
+    const normalized = normalizeSalvageFilter(filter);
+    const itemLevel = Math.floor(Number(item && item.itemLevel) || 1);
+    const rarityOk = normalized.rarity === "all" || item.rarity === normalized.rarity;
+    const levelOk = itemLevel >= normalized.minLevel && itemLevel <= normalized.maxLevel;
+    return rarityOk && levelOk;
+  }
+
+  function selectSalvageableByFilter(filter) {
+    const currentState = getState();
+    const normalized = normalizeSalvageFilter(filter);
+    currentState.forge.salvageSelectedIds = currentState.inventory.filter(function (item) {
+      return !item.locked && !item.equipped && matchesSalvageFilter(item, normalized);
+    }).map(function (item) {
+      return item.id;
+    });
+    markDirty("select-filtered-salvage");
+    emit("salvage-selection", getSalvagePreview());
+    return currentState.forge.salvageSelectedIds.slice();
+  }
+
   function salvageExternalItem(item, options) {
     const currentState = getState();
     const normalized = normalizeItem(item, 99999);
@@ -1738,6 +1778,7 @@
     getSalvagePreview: getSalvagePreview,
     toggleSalvageSelection: toggleSalvageSelection,
     selectAllSalvageable: selectAllSalvageable,
+    selectSalvageableByFilter: selectSalvageableByFilter,
     clearSalvageSelection: clearSalvageSelection,
     salvageSelectedItems: salvageSelectedItems,
     salvageExternalItem: salvageExternalItem,
