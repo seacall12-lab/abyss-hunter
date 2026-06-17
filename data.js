@@ -34,7 +34,7 @@
   loadContentDataFallback();
 
   const CONFIG = {
-    GAME_VERSION: "0.5.6",
+    GAME_VERSION: "0.5.8",
     SAVE_VERSION: 5,
     STORAGE_KEY: "abyssHunter.save",
     AUTOSAVE_INTERVAL_MS: 5000,
