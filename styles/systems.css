@@ -144,19 +144,6 @@ dd {
   margin-top: 10px;
 }
 
-#equipmentView.active .inventory-panel {
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto auto auto auto;
-  overflow: visible;
-}
-
-#equipmentView.active #inventoryGrid,
-#equipmentView.active #inventoryEmpty {
-  min-height: auto;
-  overflow: visible;
-}
-
 .equipment-grid {
   grid-template-columns: repeat(2, 1fr);
 }
@@ -299,118 +286,6 @@ input[type="number"] {
 
 .forge-content-panel[hidden] {
   display: none !important;
-}
-
-#forgeEnhancePanel {
-  display: grid;
-  grid-template-rows: auto auto auto auto auto auto;
-  gap: 8px;
-  min-height: 0;
-  overflow: visible;
-  grid-row: 3;
-  position: relative;
-  z-index: 2;
-}
-
-#forgeEnhancePanel .forge-panel-heading {
-  grid-row: 1;
-}
-
-#forgeEnhancePanel .forge-selected-item {
-  grid-row: 2;
-}
-
-#forgeEnhancePanel .enhance-preview-grid {
-  grid-row: 3;
-}
-
-#forgeEnhancePanel .enhance-cost-box {
-  grid-row: 4;
-}
-
-#forgeEnhancePanel #enhanceButton {
-  grid-row: 5;
-  min-height: 44px;
-  position: relative;
-  z-index: 3;
-}
-
-#forgeEnhancePanel #enhanceNotice {
-  grid-row: 6;
-}
-
-#forgeInventoryPanel {
-  display: grid;
-  grid-template-rows: auto auto;
-  min-height: 0;
-  overflow: visible;
-  grid-row: 4;
-  position: relative;
-  z-index: 1;
-}
-
-#forgeInventoryPanel .forge-panel-heading {
-  grid-row: 1;
-}
-
-#forgeInventoryPanel #forgeInventoryGrid,
-#forgeInventoryPanel #forgeInventoryEmpty {
-  grid-row: 2;
-  min-height: auto;
-  overflow: visible;
-}
-
-#forgeSalvagePanel {
-  display: grid;
-  grid-template-rows: auto auto auto auto auto auto;
-  gap: 8px;
-  min-height: 0;
-  overflow: visible;
-  grid-row: 3 / 5;
-}
-
-#forgeSalvagePanel .forge-panel-heading {
-  grid-row: 1;
-}
-
-#forgeSalvagePanel .salvage-filter-tools {
-  grid-row: 2;
-}
-
-#forgeSalvagePanel .salvage-summary {
-  grid-row: 3;
-}
-
-#forgeSalvagePanel #salvageInventoryGrid {
-  grid-row: 4;
-  min-height: auto;
-  overflow: visible;
-}
-
-#forgeSalvagePanel #salvageButton {
-  grid-row: 5;
-}
-
-#forgeSalvagePanel #salvageNotice {
-  grid-row: 6;
-}
-
-#forgeAutoSalvagePanel {
-  display: grid;
-  grid-template-rows: auto auto;
-  min-height: 0;
-  overflow: visible;
-  grid-row: 3 / 5;
-}
-
-#forgeAutoSalvagePanel .forge-panel-heading {
-  grid-row: 1;
-}
-
-#forgeAutoSalvagePanel .auto-salvage-options {
-  grid-row: 2;
-  min-height: auto;
-  overflow: visible;
 }
 
 .forge-selected-item {
