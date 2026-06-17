@@ -1,171 +1,179 @@
-@media (max-width: 430px) {
+.orientation-guard {
+  display: none;
+}
+
+@media (orientation: portrait) and (max-width: 900px) {
   .app-shell {
-    padding-left: 8px;
-    padding-right: 8px;
+    visibility: hidden;
+  }
+
+  .orientation-guard {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 10px;
+    padding: 24px;
+    text-align: center;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(102, 217, 239, 0.16), transparent 38%),
+      #070b12;
+    color: var(--text);
+  }
+
+  .orientation-guard strong {
+    font-size: 22px;
+  }
+
+  .orientation-guard span {
+    max-width: 280px;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+}
+
+@media (max-aspect-ratio: 16 / 9) and (orientation: landscape) {
+  .app-shell {
+    width: 100vw;
+    height: min(100dvh, calc(100vw * 9 / 16));
+    border-radius: 0;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .top-bar,
+  .player-summary,
+  #huntView .stage-heading,
+  #huntView .combat-hud,
+  #huntView .controls-panel,
+  #huntView .recent-log-strip,
+  #bossBattlePanel .boss-battle-heading,
+  #bossBattlePanel .boss-status-grid,
+  #bossBattlePanel .ultimate-gauge-block {
+    transform: scale(0.9);
+    transform-origin: top left;
   }
 
   .top-bar {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 6px;
-    padding: 8px;
+    transform-origin: top right;
   }
 
-  .brand-block {
-    min-width: 0;
+  #huntView .stage-heading,
+  #bossBattlePanel .boss-battle-heading {
+    transform: translateX(-50%) scale(0.9);
+    transform-origin: top center;
   }
 
-  .brand-block .eyebrow {
+  #huntView .controls-panel,
+  #bossBattlePanel .ultimate-gauge-block {
+    transform-origin: bottom right;
+  }
+
+  #huntView .recent-log-strip {
     display: none;
-  }
-
-  .brand-block h1 {
-    overflow: hidden;
-    font-size: 15px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .top-currencies {
-    grid-column: auto;
-    display: flex;
-    gap: 4px;
-    min-width: 0;
-  }
-
-  .currency-chip {
-    min-width: 48px;
-    padding: 4px 5px;
-  }
-
-  .currency-chip span {
-    font-size: 9px;
-  }
-
-  .currency-chip strong {
-    font-size: 13px;
-  }
-
-  .top-actions {
-    grid-column: auto;
-    gap: 4px;
-    min-width: 0;
-  }
-
-  .icon-button {
-    width: 30px;
-    min-height: 30px;
-    font-size: 12px;
   }
 
   .view-tabs {
-    left: 8px;
-    right: 8px;
-    width: auto;
-    transform: none;
+    grid-template-columns: repeat(4, 46px);
   }
 
   .view-tab {
-    min-width: 0;
-    padding: 6px 2px;
+    min-height: 44px;
   }
 
-  .player-summary {
-    gap: 8px;
-    padding: 8px;
-  }
-
-  .level-emblem {
-    width: 46px;
-  }
-
-  .summary-center,
-  .progress-group {
-    gap: 6px;
-  }
-
-  .stage-heading,
-  .info-grid,
-  .boss-status-grid,
-  .equipment-grid,
-  .inventory-filters,
-  .salvage-filter-grid,
-  .enhance-preview-grid,
-  .salvage-summary {
-    grid-template-columns: 1fr;
-  }
-
-  .boss-skill-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  #huntView.active .stage-heading,
-  #huntView.active .combat-hud {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  #huntView.active .stage-heading {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  #huntView.active .combat-hud {
-    gap: 6px;
-    margin-top: 8px;
-  }
-
-  #huntView.active .combatant-card {
-    padding: 8px;
-  }
-
-  #huntView.active .combatant-title {
-    display: flex;
-    gap: 4px;
-  }
-
-  #huntView.active .combatant-title span,
-  #huntView.active .combatant-title strong {
-    font-size: 12px;
-  }
-
-  #huntView.active .compact {
-    margin: 5px 0 4px;
-  }
-
-  #huntView.active .battlefield {
-    width: min(100%, clamp(240px, calc(100dvh - 544px), 300px));
-  }
-
-  #huntView.active .stage-heading h2 {
-    font-size: 24px;
-  }
-
-  .footer-note {
+  .view-tab > span:not(.view-tab-icon):not(.inventory-badge):not(.boss-ready-badge) {
     display: none;
   }
 
-  #bossBattlePanel .boss-status-grid {
-    grid-template-columns: 1fr 1fr;
+  #bossBattlePanel .boss-skill-grid {
+    width: min(480px, 46vw);
     gap: 6px;
   }
 
-  #bossBattlePanel .boss-battlefield {
-    width: min(100%, clamp(170px, calc(100dvh - 600px), 260px));
-  }
-
-  #bossBattlePanel .boss-status-grid article {
-    padding: 8px;
-  }
-
-  #bossBattlePanel .combatant-title {
-    display: grid;
-    gap: 2px;
-    justify-items: start;
-  }
-
   .boss-skill-button {
-    min-height: 68px;
+    min-height: 58px;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .top-currencies .currency-chip span,
+  .progress-group,
+  #huntView .recent-log-strip,
+  .hunt-quick-actions {
+    display: none;
   }
 
-  .item-extra-info {
+  .player-summary {
+    width: 164px;
+  }
+
+  #huntView .combat-hud {
+    top: calc(max(8px, env(safe-area-inset-top)) + 60px);
+    width: 196px;
+  }
+
+  #huntView .stage-heading {
+    width: 270px;
+  }
+
+  #huntView .controls-panel {
+    width: 176px;
+  }
+
+  .top-bar {
+    grid-template-columns: auto;
+  }
+
+  .top-currencies {
+    justify-content: end;
+  }
+
+  .top-actions {
+    justify-content: end;
+  }
+
+  .icon-button {
+    width: 34px;
+    min-height: 34px;
+    font-size: 12px;
+  }
+
+  #equipmentView.active,
+  #forgeView.active {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+
+  #forgeView.active .forge-summary,
+  #forgeView.active .forge-sub-tabs,
+  #forgeEnhancePanel,
+  #forgeSalvagePanel,
+  #forgeAutoSalvagePanel,
+  #forgeInventoryPanel:not([hidden]) {
+    grid-column: 1;
+  }
+
+  #forgeView.active .forge-sub-tabs {
+    grid-row: 1;
+  }
+
+  #forgeView.active .forge-summary {
+    display: none;
+  }
+
+  #forgeEnhancePanel,
+  #forgeSalvagePanel,
+  #forgeAutoSalvagePanel {
+    grid-row: 2 / 4;
+  }
+
+  #forgeEnhancePanel:not([hidden]) {
+    grid-row: 2;
+  }
+
+  #forgeInventoryPanel:not([hidden]) {
+    grid-row: 3;
   }
 }
