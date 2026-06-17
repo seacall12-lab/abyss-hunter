@@ -1750,4 +1750,3 @@
     incrementStatistic: incrementStatistic
   };
 })(window);
-  
