@@ -12,13 +12,21 @@
   const Combat = global.GameCombat;
   const Loot = global.GameLoot;
   const CONFIG = Data.CONFIG;
+  const DEFAULT_SALVAGE_FILTER = {
+    rarity: "all",
+    minLevel: 1,
+    maxLevel: CONFIG.MAX_LEVEL
+  };
 
   const WIDTH = 720;
   const HEIGHT = 720;
-  const PLAYER_ATTACK_DURATION = 0.24;
-  const MONSTER_ATTACK_DURATION = 0.24;
+  const PLAYER_ATTACK_DURATION = 0.38;
+  const MONSTER_ATTACK_DURATION = 0.36;
   const HIT_DURATION = 0.28;
   const FIELD_SHAKE_DURATION = 0.2;
+  const MONSTER_ENTER_DURATION = 0.58;
+  const MONSTER_DEATH_DURATION = 0.72;
+  const TRAVEL_TRANSITION_DURATION = 0.95;
   const BOSS_SMASH_DURATION = 0.36;
   const BOSS_GUARD_FLASH_DURATION = 0.72;
   const BOSS_ULTIMATE_DURATION = 0.92;
@@ -33,6 +41,12 @@
     fieldShake: 0,
     criticalFlash: 0,
     lootGlow: 0,
+    monsterEnter: 0,
+    monsterDeath: 0,
+    travel: 0,
+    backgroundScroll: 0,
+    defeatedMonster: null,
+    playerAttackVariant: "normal",
     bossPlayerHit: 0,
     bossHit: 0,
     bossWarning: 0,
@@ -42,7 +56,8 @@
     texts: [],
     bossTexts: [],
     particles: [],
-    bossParticles: []
+    bossParticles: [],
+    lootDrops: []
   };
 
   let initialized = false;
@@ -58,6 +73,7 @@
   let bossListDirty = true;
   let bossResultDismissed = false;
   let activeForgePanel = "enhance";
+  let salvageFilter = Object.assign({}, DEFAULT_SALVAGE_FILTER);
   let audioContext = null;
   let audioUnlocked = false;
 
@@ -146,6 +162,12 @@
       "forgeInventoryGrid",
       "forgeInventoryEmpty",
       "salvageSelectAllButton",
+      "salvageRarityFilter",
+      "salvageMinLevelInput",
+      "salvageMaxLevelInput",
+      "salvageSelectFilteredButton",
+      "salvageClearButton",
+      "salvageFilterHint",
       "salvageSelectedCount",
       "salvageExpectedStones",
       "salvageExpectedGold",
@@ -364,6 +386,66 @@
     node.classList.remove("rarity-common", "rarity-rare", "rarity-epic", "rarity-legendary");
   }
 
+  function normalizeSalvageFilter(filter) {
+    const source = filter && typeof filter === "object" ? filter : {};
+    const rarity = Object.prototype.hasOwnProperty.call(Data.RARITIES, source.rarity) ? source.rarity : "all";
+    let minLevel = Math.floor(Number(source.minLevel));
+    let maxLevel = Math.floor(Number(source.maxLevel));
+    minLevel = Number.isFinite(minLevel) ? Math.min(CONFIG.MAX_LEVEL, Math.max(1, minLevel)) : DEFAULT_SALVAGE_FILTER.minLevel;
+    maxLevel = Number.isFinite(maxLevel) ? Math.min(CONFIG.MAX_LEVEL, Math.max(1, maxLevel)) : DEFAULT_SALVAGE_FILTER.maxLevel;
+    if (minLevel > maxLevel) {
+      const previousMin = minLevel;
+      minLevel = maxLevel;
+      maxLevel = previousMin;
+    }
+    return {
+      rarity: rarity,
+      minLevel: minLevel,
+      maxLevel: maxLevel
+    };
+  }
+
+  function getSalvageFilterFromControls() {
+    return normalizeSalvageFilter({
+      rarity: el.salvageRarityFilter.value,
+      minLevel: el.salvageMinLevelInput.value,
+      maxLevel: el.salvageMaxLevelInput.value
+    });
+  }
+
+  function applySalvageFilterToControls(filter) {
+    const normalized = normalizeSalvageFilter(filter);
+    el.salvageRarityFilter.value = normalized.rarity;
+    el.salvageMinLevelInput.value = String(normalized.minLevel);
+    el.salvageMaxLevelInput.value = String(normalized.maxLevel);
+    return normalized;
+  }
+
+  function syncSalvageFilterFromControls() {
+    salvageFilter = applySalvageFilterToControls(getSalvageFilterFromControls());
+    return salvageFilter;
+  }
+
+  function matchesSalvageFilter(item, filter) {
+    const normalized = normalizeSalvageFilter(filter);
+    const itemLevel = Math.floor(Number(item && item.itemLevel) || 1);
+    return (normalized.rarity === "all" || item.rarity === normalized.rarity)
+      && itemLevel >= normalized.minLevel
+      && itemLevel <= normalized.maxLevel;
+  }
+
+  function getSalvageFilterCandidates(filter) {
+    return Loot.getSalvageableItems().filter(function (item) {
+      return matchesSalvageFilter(item, filter);
+    });
+  }
+
+  function formatSalvageFilterLabel(filter) {
+    const normalized = normalizeSalvageFilter(filter);
+    const rarityName = normalized.rarity === "all" ? "전체 등급" : Data.getRarity(normalized.rarity).name;
+    return rarityName + " · 장비 레벨 " + normalized.minLevel + "-" + normalized.maxLevel;
+  }
+
   function scrollIntoViewSafe(node, options) {
     if (!node || typeof node.scrollIntoView !== "function") {
       return;
@@ -577,6 +659,13 @@
     const runtime = Combat.getRuntimeSnapshot();
     const monster = runtime.currentMonster;
     if (!monster) {
+      if (effects.defeatedMonster && effects.monsterDeath > 0) {
+        el.monsterTypeLabel.textContent = "처치됨";
+        el.monsterName.textContent = effects.defeatedMonster.name;
+        el.monsterHpText.textContent = "0 / " + formatNumber(effects.defeatedMonster.maxHp);
+        setBar(el.monsterHpFill, 0, Math.max(1, effects.defeatedMonster.maxHp));
+        return;
+      }
       el.monsterTypeLabel.textContent = runtime.status === "player-dead" ? "회복 중" : "다음 몬스터";
       el.monsterName.textContent = runtime.status === "player-dead" ? "플레이어 쓰러짐" : "등장 준비";
       el.monsterHpText.textContent = "0 / 0";
@@ -957,6 +1046,8 @@
     }
     salvageDirty = false;
     const state = State.getState();
+    const filter = syncSalvageFilterFromControls();
+    const filterCandidates = getSalvageFilterCandidates(filter);
     const selectedIds = new Set(state.forge.salvageSelectedIds);
     const preview = State.getSalvagePreview();
     clearChildren(el.salvageInventoryGrid);
@@ -967,6 +1058,9 @@
       row.className = "salvage-row rarity-" + item.rarity;
       row.dataset.itemId = item.id;
       row.disabled = item.locked || item.equipped;
+      if (!row.disabled && matchesSalvageFilter(item, filter)) {
+        row.classList.add("filter-match");
+      }
       if (selectedIds.has(item.id)) {
         row.classList.add("selected");
       }
@@ -986,6 +1080,9 @@
     el.salvageExpectedStones.textContent = formatNumber(preview.enhancementStone);
     el.salvageButton.disabled = preview.count <= 0;
     el.salvageSelectAllButton.textContent = preview.count > 0 && preview.count === Loot.getSalvageableItems().length ? "전체 해제" : "전체 선택";
+    el.salvageSelectFilteredButton.disabled = filterCandidates.length <= 0;
+    el.salvageClearButton.disabled = preview.count <= 0;
+    el.salvageFilterHint.textContent = formatSalvageFilterLabel(filter) + " · 분해 가능 " + filterCandidates.length + "개";
   }
 
   function renderAutoSalvage() {
@@ -1242,6 +1339,16 @@
     return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
   }
 
+  function easeOutCubic(value) {
+    const t = 1 - clamp01(value);
+    return 1 - t * t * t;
+  }
+
+  function easeInOutSine(value) {
+    const t = clamp01(value);
+    return -(Math.cos(Math.PI * t) - 1) / 2;
+  }
+
   function getMotionProgress(remaining, duration) {
     if (remaining <= 0 || duration <= 0) {
       return 0;
@@ -1288,6 +1395,97 @@
         color: color || "#f7fbff",
         kind: index % 3 === 0 ? "spark" : "dust"
       });
+    }
+  }
+
+  function addLootDrop(kind, label, x, y, color) {
+    const settings = State.getState().settings;
+    if (settings.reducedEffects && effects.lootDrops.length > 3) {
+      effects.lootDrops.shift();
+    }
+    effects.lootDrops.push({
+      kind: kind || "gold",
+      label: label || "",
+      x: x,
+      y: y,
+      vx: Data.randomRange(-56, 44),
+      vy: Data.randomRange(-250, -180),
+      groundY: HEIGHT * 0.78 + Data.randomRange(-10, 16),
+      life: 1.25,
+      maxLife: 1.25,
+      bounce: 0,
+      color: color || "#ffd36a"
+    });
+    while (effects.lootDrops.length > 8) {
+      effects.lootDrops.shift();
+    }
+  }
+
+  function drawLootDrops(context, delta) {
+    for (let index = effects.lootDrops.length - 1; index >= 0; index -= 1) {
+      const drop = effects.lootDrops[index];
+      drop.life -= delta;
+      drop.vy += 620 * delta;
+      drop.x += drop.vx * delta;
+      drop.y += drop.vy * delta;
+      if (drop.y > drop.groundY) {
+        drop.y = drop.groundY;
+        if (drop.bounce < 1 && Math.abs(drop.vy) > 80) {
+          drop.vy *= -0.34;
+          drop.vx *= 0.72;
+          drop.bounce += 1;
+        } else {
+          drop.vy = 0;
+          drop.vx *= 0.84;
+        }
+      }
+      if (drop.life <= 0) {
+        effects.lootDrops.splice(index, 1);
+        continue;
+      }
+      const alpha = clamp01(drop.life / drop.maxLife);
+      const float = Math.max(0, 0.4 - drop.life) * 26;
+      context.save();
+      context.globalAlpha = alpha;
+      context.translate(drop.x, drop.y - float);
+      context.fillStyle = "rgba(0,0,0,0.26)";
+      context.beginPath();
+      context.ellipse(0, 17, drop.kind === "item" ? 24 : 18, 6, 0, 0, Math.PI * 2);
+      context.fill();
+      if (drop.kind === "item") {
+        context.rotate(Math.sin(effects.time * 8 + index) * 0.08);
+        context.fillStyle = drop.color;
+        roundedRect(context, -18, -24, 36, 42, 7);
+        context.fill();
+        context.strokeStyle = "#f7fbff";
+        context.lineWidth = 3;
+        context.stroke();
+        context.fillStyle = "#07101b";
+        context.font = "900 16px system-ui, sans-serif";
+        context.textAlign = "center";
+        context.fillText("장", 0, 2);
+      } else {
+        context.fillStyle = "#ffd36a";
+        context.beginPath();
+        context.arc(0, -7, 16, 0, Math.PI * 2);
+        context.fill();
+        context.strokeStyle = "#fff2a6";
+        context.lineWidth = 3;
+        context.stroke();
+        context.fillStyle = "#7b4b00";
+        context.font = "900 16px system-ui, sans-serif";
+        context.textAlign = "center";
+        context.fillText("G", 0, -1);
+      }
+      if (drop.label) {
+        context.font = "800 16px system-ui, sans-serif";
+        context.lineWidth = 3;
+        context.strokeStyle = "rgba(0,0,0,0.72)";
+        context.strokeText(drop.label, 0, -34);
+        context.fillStyle = "#fff7c7";
+        context.fillText(drop.label, 0, -34);
+      }
+      context.restore();
     }
   }
 
@@ -1483,17 +1681,35 @@
 
   function drawBackground(context, region, warning) {
     const colors = region.background || Data.REGIONS[0].background;
+    const scroll = effects.backgroundScroll || 0;
+    const travelPulse = effects.travel > 0 ? clamp01(effects.travel / TRAVEL_TRANSITION_DURATION) : 0;
     const gradient = context.createLinearGradient(0, 0, 0, HEIGHT);
     gradient.addColorStop(0, warning ? "#43202f" : colors.skyTop);
     gradient.addColorStop(0.72, colors.skyBottom);
     gradient.addColorStop(1, colors.ground);
     context.fillStyle = gradient;
     context.fillRect(0, 0, WIDTH, HEIGHT);
+
     context.save();
-    context.globalAlpha = 0.18;
+    context.globalAlpha = 0.12;
     context.fillStyle = colors.accent;
-    for (let index = 0; index < 7; index += 1) {
-      const x = 20 + index * 115;
+    for (let index = -1; index < 8; index += 1) {
+      const x = ((index * 128 - scroll * 0.16) % 860 + 860) % 860 - 70;
+      const h = 52 + index % 3 * 24;
+      context.beginPath();
+      context.moveTo(x, 386);
+      context.lineTo(x + 48, 386 - h);
+      context.lineTo(x + 96, 386);
+      context.closePath();
+      context.fill();
+    }
+    context.restore();
+
+    context.save();
+    context.globalAlpha = 0.2 + travelPulse * 0.08;
+    context.fillStyle = colors.accent;
+    for (let index = -1; index < 9; index += 1) {
+      const x = ((index * 115 - scroll * 0.42) % 920 + 920) % 920 - 90;
       const h = 90 + index % 3 * 36;
       context.beginPath();
       context.moveTo(x, 470);
@@ -1503,16 +1719,51 @@
       context.fill();
     }
     context.restore();
+
+    context.fillStyle = "rgba(5, 8, 13, 0.34)";
+    context.fillRect(0, HEIGHT * 0.77, WIDTH, HEIGHT * 0.23);
+
+    context.save();
+    context.globalAlpha = 0.32;
+    context.strokeStyle = "rgba(244,247,255,0.16)";
+    context.lineWidth = 4;
+    for (let index = -1; index < 10; index += 1) {
+      const x = ((index * 92 - scroll * 0.95) % 880 + 880) % 880 - 80;
+      context.beginPath();
+      context.moveTo(x, HEIGHT * 0.78);
+      context.lineTo(x + 44, HEIGHT * 0.76);
+      context.stroke();
+    }
+    context.restore();
   }
 
-  function drawPlayer(context, x, y, hit, attack) {
+  function drawPlayer(context, x, y, hit, attack, options) {
     const player = State.getState().player;
     const alive = player.currentHp > 0;
+    const settings = options || {};
     const attackProgress = getMotionProgress(attack, PLAYER_ATTACK_DURATION);
-    const attackCurve = attackProgress > 0 ? Math.sin(attackProgress * Math.PI) : 0;
+    let attackAdvance = 0;
+    let weaponSwing = 0;
+    if (attackProgress > 0 && attackProgress < 0.34) {
+      attackAdvance = -16 * easeInOutSine(attackProgress / 0.34);
+      weaponSwing = -0.22 * easeInOutSine(attackProgress / 0.34);
+    } else if (attackProgress >= 0.34 && attackProgress < 0.64) {
+      const strike = easeOutBack((attackProgress - 0.34) / 0.3);
+      attackAdvance = -16 + strike * 98;
+      weaponSwing = strike;
+    } else if (attackProgress >= 0.64) {
+      const recover = easeOutCubic((attackProgress - 0.64) / 0.36);
+      attackAdvance = 82 * (1 - recover);
+      weaponSwing = 1 - recover;
+    }
+    const attackCurve = Math.max(0, Math.sin(attackProgress * Math.PI));
     const shake = hit > 0 ? Math.sin(hit * 90) * 8 : 0;
+    const walk = settings.walking ? Math.sin(effects.time * 13) : 0;
+    const walkLift = settings.walking ? Math.abs(walk) * 7 : 0;
+    const variant = settings.variant || "normal";
+    const strongStrike = variant === "critical" || variant === "smash" || variant === "ultimate";
     context.save();
-    context.translate(x + shake + attackCurve * 46, y - attackCurve * 8);
+    context.translate(x + shake + attackAdvance, y - attackCurve * 7 - walkLift);
     if (!alive) {
       context.rotate(-0.55);
       context.globalAlpha = 0.55;
@@ -1521,6 +1772,17 @@
     context.beginPath();
     context.ellipse(0, 92, 70, 16, 0, 0, Math.PI * 2);
     context.fill();
+
+    context.strokeStyle = "#2e5a91";
+    context.lineWidth = 15;
+    context.lineCap = "round";
+    context.beginPath();
+    context.moveTo(-24, 58);
+    context.lineTo(-44 - walk * 10, 98);
+    context.moveTo(24, 58);
+    context.lineTo(44 + walk * 10, 98);
+    context.stroke();
+
     const armor = context.createLinearGradient(-45, -40, 45, 75);
     armor.addColorStop(0, "#6fe7ff");
     armor.addColorStop(0.6, "#477ec9");
@@ -1536,12 +1798,22 @@
     context.arc(0, -68, 32, 0, Math.PI * 2);
     context.fill();
     context.strokeStyle = "#f6fbff";
-    context.lineWidth = attackProgress > 0 ? 14 : 12;
+    context.lineWidth = strongStrike ? 17 : attackProgress > 0 ? 14 : 12;
     context.lineCap = "round";
     context.beginPath();
     context.moveTo(38, 0);
-    context.lineTo(98 + attackCurve * 36, -58 + attackCurve * 64);
+    context.lineTo(86 + weaponSwing * 58, -62 + weaponSwing * 94);
     context.stroke();
+    if (strongStrike && attackProgress > 0.32) {
+      context.globalAlpha = 0.36;
+      context.strokeStyle = variant === "ultimate" ? "#ffe66d" : "#8cf0ff";
+      context.lineWidth = 25;
+      context.beginPath();
+      context.moveTo(48, -4);
+      context.lineTo(96 + weaponSwing * 66, -62 + weaponSwing * 98);
+      context.stroke();
+      context.globalAlpha = 1;
+    }
     if (hit > 0) {
       context.globalAlpha = clamp01(hit / HIT_DURATION) * 0.62;
       context.fillStyle = "#ffffff";
@@ -1552,22 +1824,97 @@
       context.fill();
     }
     context.restore();
-    drawSlashArc(context, x + 92, y - 8, attackProgress, "#d8f7ff", false);
+    const slashProgress = attackProgress <= 0.34 ? 0 : clamp01((attackProgress - 0.34) / 0.42);
+    const slashColor = variant === "ultimate" ? "#ffe66d" : variant === "smash" ? "#ffd36a" : strongStrike ? "#ffe66d" : "#d8f7ff";
+    drawSlashArc(context, x + 98, y - 8, slashProgress, slashColor, strongStrike);
   }
 
-  function drawEnemy(context, monster, x, y, hit, attack) {
+  function drawPackCompanions(context, monster, x, y, enterProgress, deathProgress) {
+    if (!monster || deathProgress > 0 || State.getState().settings.reducedEffects) {
+      return;
+    }
+    let count = 0;
+    if (monster.shape === "slime") {
+      count = 2;
+    } else if (monster.shape === "wolf" || monster.shape === "alphaWolf") {
+      count = 1;
+    } else if (monster.shape === "goblin") {
+      count = 2;
+    }
+    if (count <= 0) {
+      return;
+    }
+    const offsets = count === 1 ? [[78, 28, 0.58]] : [[80, 30, 0.52], [124, -8, 0.42]];
+    offsets.forEach(function (item, index) {
+      context.save();
+      context.globalAlpha = item[2] * clamp01(enterProgress);
+      drawEnemy(context, monster, x + item[0], y + item[1], 0, 0, {
+        enterProgress: enterProgress,
+        deathProgress: 0,
+        scale: index === 0 ? 0.52 : 0.42,
+        ghost: true
+      });
+      context.restore();
+    });
+  }
+
+  function drawEnemy(context, monster, x, y, hit, attack, options) {
     if (!monster) {
       return;
     }
+    const settings = options || {};
     const attackProgress = getMotionProgress(attack, MONSTER_ATTACK_DURATION);
+    const enterProgress = settings.enterProgress === undefined ? 1 : clamp01(settings.enterProgress);
+    const deathProgress = clamp01(settings.deathProgress || 0);
+    const scale = settings.scale || 1;
+    let attackAdvance = 0;
+    if (attackProgress > 0 && attackProgress < 0.32) {
+      attackAdvance = 18 * easeInOutSine(attackProgress / 0.32);
+    } else if (attackProgress >= 0.32 && attackProgress < 0.62) {
+      attackAdvance = 18 - easeOutBack((attackProgress - 0.32) / 0.3) * 92;
+    } else if (attackProgress >= 0.62) {
+      attackAdvance = -74 * (1 - easeOutCubic((attackProgress - 0.62) / 0.38));
+    }
     const attackCurve = attackProgress > 0 ? Math.sin(attackProgress * Math.PI) : 0;
-    const shake = hit > 0 ? Math.sin(hit * 100) * 10 : 0;
+    const shake = hit > 0 ? Math.sin(hit * 100) * (monster.shape === "slime" ? 7 : 10) : 0;
+    const enterOffset = (1 - easeOutCubic(enterProgress)) * (monster.shape === "wolf" ? 310 : 250);
+    const bob = deathProgress > 0 ? 0 : Math.sin(effects.time * (monster.shape === "wolf" ? 9 : 6) + x * 0.01) * (monster.shape === "slime" ? 9 : 4);
+    const alpha = (settings.ghost ? 0.78 : 1) * (deathProgress > 0 ? Math.max(0, 1 - deathProgress * 0.95) : 1) * (0.3 + enterProgress * 0.7);
     context.save();
-    context.translate(x + shake - attackCurve * 42, y - attackCurve * 5);
+    context.globalAlpha *= alpha;
+    context.translate(x + enterOffset + shake + attackAdvance, y + bob - attackCurve * 6 + deathProgress * 44);
+    if (deathProgress > 0) {
+      context.rotate((monster.shape === "wolf" ? -0.46 : monster.shape === "goblin" ? 0.42 : 0) * easeOutCubic(deathProgress));
+    }
+    context.scale(scale, scale);
+    context.fillStyle = "rgba(0,0,0,0.32)";
+    context.beginPath();
+    context.ellipse(0, 96, 78, 14, 0, 0, Math.PI * 2);
+    context.fill();
     context.fillStyle = monster.color || "#93c95f";
-    if (monster.shape === "wolf" || monster.shape === "alphaWolf") {
+    if (monster.shape === "slime") {
+      const squash = 1 + Math.sin(effects.time * 8) * 0.08 + attackCurve * 0.16 - deathProgress * 0.34;
+      context.save();
+      context.scale(1 + (1 - squash) * 0.5, squash);
       context.beginPath();
-      context.ellipse(0, 24, 82, 48, 0, 0, Math.PI * 2);
+      context.ellipse(0, 28, 70 + attackCurve * 9, 58 - attackCurve * 6, 0, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+      context.fillStyle = monster.accentColor || "#ddf7b9";
+      context.beginPath();
+      context.arc(-22, 4, 8, 0, Math.PI * 2);
+      context.arc(20, 2, 8, 0, Math.PI * 2);
+      context.fill();
+      context.strokeStyle = "rgba(5, 20, 16, 0.58)";
+      context.lineWidth = 5;
+      context.beginPath();
+      context.arc(0, 24, 24, 0.16, Math.PI - 0.16);
+      context.stroke();
+    } else if (monster.shape === "wolf" || monster.shape === "alphaWolf") {
+      context.save();
+      context.translate(0, attackCurve * 6);
+      context.beginPath();
+      context.ellipse(-6, 28, 88, 44, -0.04, 0, Math.PI * 2);
       context.fill();
       context.beginPath();
       context.moveTo(-30, -30);
@@ -1577,39 +1924,98 @@
       context.lineTo(35, -22);
       context.closePath();
       context.fill();
+      context.strokeStyle = monster.accentColor || "#dce2ee";
+      context.lineWidth = 12;
+      context.lineCap = "round";
+      context.beginPath();
+      context.moveTo(-44, 60);
+      context.lineTo(-64 - Math.sin(effects.time * 12) * 8, 98);
+      context.moveTo(20, 64);
+      context.lineTo(44 + Math.sin(effects.time * 12) * 8, 98);
+      context.stroke();
+      context.fillStyle = monster.accentColor || "#dce2ee";
+      context.beginPath();
+      context.arc(-20, -16, 5, 0, Math.PI * 2);
+      context.arc(20, -18, 5, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
     } else if (monster.shape === "treant") {
       roundedRect(context, -52, -80, 104, 170, 26);
       context.fill();
       context.fillStyle = monster.accentColor || "#d5f0a8";
       context.fillRect(-36, -94, 72, 18);
+      context.strokeStyle = monster.accentColor || "#d5f0a8";
+      context.lineWidth = 12;
+      context.lineCap = "round";
+      context.beginPath();
+      context.moveTo(-48, -22);
+      context.lineTo(-92 - attackCurve * 16, 26 + attackCurve * 14);
+      context.moveTo(48, -22);
+      context.lineTo(88, 18);
+      context.stroke();
     } else {
-      roundedRect(context, -52, -46, 104, 132, 22);
+      roundedRect(context, -48, -42, 96, 126, 22);
+      context.fill();
+      context.fillStyle = monster.color || "#93c95f";
+      context.beginPath();
+      context.arc(0, -62, 34, 0, Math.PI * 2);
       context.fill();
       context.fillStyle = monster.accentColor || "#ddf7b9";
       context.beginPath();
-      context.arc(-18, -14, 7, 0, Math.PI * 2);
-      context.arc(18, -14, 7, 0, Math.PI * 2);
+      context.arc(-13, -66, 6, 0, Math.PI * 2);
+      context.arc(13, -66, 6, 0, Math.PI * 2);
       context.fill();
-    }
-    if (attackProgress > 0) {
-      context.globalAlpha = Math.max(0, 1 - attackProgress) * 0.7;
-      context.strokeStyle = monster.accentColor || "#ffefad";
-      context.lineWidth = 9;
+      context.strokeStyle = monster.accentColor || "#ddf7b9";
+      context.lineWidth = 10;
       context.lineCap = "round";
       context.beginPath();
-      context.moveTo(-72, -14);
-      context.lineTo(-122, -36 + attackCurve * 28);
+      context.moveTo(-36, -8);
+      context.lineTo(-72 - attackCurve * 18, -36 + attackCurve * 38);
+      context.moveTo(38, -4);
+      context.lineTo(78 + attackCurve * 16, -42 + attackCurve * 54);
+      context.stroke();
+    }
+    if (attackProgress > 0) {
+      context.globalAlpha *= Math.max(0, 1 - attackProgress) * 0.76;
+      context.strokeStyle = monster.accentColor || "#ffefad";
+      context.lineWidth = monster.shape === "wolf" || monster.shape === "alphaWolf" ? 12 : 9;
+      context.lineCap = "round";
+      context.beginPath();
+      if (monster.shape === "slime") {
+        context.arc(-78, 18, 38 + attackCurve * 12, -2.5, -0.9);
+      } else if (monster.shape === "wolf" || monster.shape === "alphaWolf") {
+        context.moveTo(-58, -20);
+        context.lineTo(-132, -48 + attackCurve * 46);
+        context.moveTo(-44, 2);
+        context.lineTo(-122, -12 + attackCurve * 34);
+      } else {
+        context.moveTo(-72, -14);
+        context.lineTo(-122, -36 + attackCurve * 38);
+      }
       context.stroke();
     }
     if (hit > 0) {
-      context.globalAlpha = clamp01(hit / HIT_DURATION) * 0.7;
+      context.globalAlpha = clamp01(hit / HIT_DURATION) * 0.72;
       context.fillStyle = "#fff4c2";
-      if (monster.shape === "wolf" || monster.shape === "alphaWolf") {
+      if (monster.shape === "slime") {
+        context.beginPath();
+        context.ellipse(0, 28, 76, 60, 0, 0, Math.PI * 2);
+        context.fill();
+      } else if (monster.shape === "wolf" || monster.shape === "alphaWolf") {
         context.beginPath();
         context.ellipse(0, 24, 88, 52, 0, 0, Math.PI * 2);
         context.fill();
       } else {
         roundedRect(context, -56, -86, 112, 176, 26);
+        context.fill();
+      }
+    }
+    if (deathProgress > 0) {
+      context.globalAlpha = Math.max(0, 1 - deathProgress) * 0.46;
+      context.fillStyle = monster.accentColor || "#65df9a";
+      for (let index = 0; index < 5; index += 1) {
+        context.beginPath();
+        context.arc(-46 + index * 22, 62 - deathProgress * (22 + index * 8), 7 + index % 2 * 3, 0, Math.PI * 2);
         context.fill();
       }
     }
@@ -1654,20 +2060,49 @@
     effects.fieldShake = Math.max(0, effects.fieldShake - delta);
     effects.criticalFlash = Math.max(0, effects.criticalFlash - delta);
     effects.lootGlow = Math.max(0, effects.lootGlow - delta);
+    effects.monsterEnter = Math.max(0, effects.monsterEnter - delta);
+    effects.monsterDeath = Math.max(0, effects.monsterDeath - delta);
+    effects.travel = Math.max(0, effects.travel - delta);
+    if (effects.travel > 0) {
+      effects.backgroundScroll += delta * 280;
+    } else {
+      effects.backgroundScroll += delta * 18;
+    }
+    if (effects.monsterDeath <= 0) {
+      effects.defeatedMonster = null;
+    }
     const state = State.getState();
     const region = Data.getRegion(state.progression.currentRegionId);
     const runtime = Combat.getRuntimeSnapshot();
     const shake = getFieldShakeOffset();
+    const liveMonster = runtime.currentMonster;
+    const deathMonster = liveMonster ? null : effects.defeatedMonster;
+    const enterProgress = liveMonster ? 1 - clamp01(effects.monsterEnter / MONSTER_ENTER_DURATION) : 1;
+    const deathProgress = deathMonster ? 1 - clamp01(effects.monsterDeath / MONSTER_DEATH_DURATION) : 0;
+    const playerWalking = effects.travel > 0 && !liveMonster;
     ctx.save();
     ctx.setTransform(canvas.width / WIDTH, 0, 0, canvas.height / HEIGHT, 0, 0);
     ctx.translate(shake.x, shake.y);
     drawBackground(ctx, region, false);
     drawLootGlow(ctx);
-    drawPlayer(ctx, WIDTH * 0.28, HEIGHT * 0.55, effects.playerHit, effects.playerAttack);
-    drawEnemy(ctx, runtime.currentMonster, WIDTH * 0.73, HEIGHT * 0.55, effects.monsterHit, effects.monsterAttack);
+    drawPlayer(ctx, WIDTH * 0.28, HEIGHT * 0.55, effects.playerHit, effects.playerAttack, {
+      walking: playerWalking,
+      variant: effects.playerAttackVariant
+    });
+    if (liveMonster) {
+      drawPackCompanions(ctx, liveMonster, WIDTH * 0.73, HEIGHT * 0.55, enterProgress, 0);
+      drawEnemy(ctx, liveMonster, WIDTH * 0.73, HEIGHT * 0.55, effects.monsterHit, effects.monsterAttack, {
+        enterProgress: enterProgress
+      });
+    } else if (deathMonster) {
+      drawEnemy(ctx, deathMonster, WIDTH * 0.73, HEIGHT * 0.55, effects.monsterHit, 0, {
+        deathProgress: deathProgress
+      });
+    }
     if (effects.criticalFlash > 0) {
       drawImpactRing(ctx, WIDTH * 0.73, HEIGHT * 0.42, 1 - clamp01(effects.criticalFlash / 0.38), "#ffe66d");
     }
+    drawLootDrops(ctx, delta);
     drawParticles(ctx, effects.particles, delta);
     drawTextEffects(ctx, effects.texts, delta);
     ctx.restore();
@@ -1696,7 +2131,9 @@
     bossCtx.translate(shake.x, shake.y);
     drawBackground(bossCtx, region, runtime.warningActive);
     drawBossTelegraph(bossCtx, runtime);
-    drawPlayer(bossCtx, WIDTH * 0.24, HEIGHT * 0.58, effects.bossPlayerHit, effects.playerAttack);
+    drawPlayer(bossCtx, WIDTH * 0.24, HEIGHT * 0.58, effects.bossPlayerHit, effects.playerAttack, {
+      variant: effects.playerAttackVariant
+    });
     drawEnemy(bossCtx, boss, WIDTH * 0.72, HEIGHT * 0.55, effects.bossHit, effects.monsterAttack);
     drawGuardShield(bossCtx, WIDTH * 0.24, HEIGHT * 0.58, runtime);
     drawBossSmashFlash(bossCtx);
@@ -1784,8 +2221,14 @@
 
   function handleCombatEvent(event) {
     const payload = event.payload || {};
-    if (event.type === "player-attack") {
+    if (event.type === "monster-spawn") {
+      effects.monsterEnter = MONSTER_ENTER_DURATION;
+      effects.monsterDeath = 0;
+      effects.defeatedMonster = null;
+      effects.playerAttackVariant = "normal";
+    } else if (event.type === "player-attack") {
       effects.playerAttack = PLAYER_ATTACK_DURATION;
+      effects.playerAttackVariant = payload.critical ? "critical" : "normal";
       effects.monsterHit = HIT_DURATION;
       addImpactBurst(effects.particles, WIDTH * 0.71, HEIGHT * 0.49, payload.critical ? "#ffe66d" : "#d8f7ff", payload.critical);
       playSound(payload.critical ? "crit" : "attack");
@@ -1807,9 +2250,17 @@
       vibrate(10);
       addDamageText(effects.texts, "-" + payload.damage, WIDTH * 0.28, HEIGHT * 0.32, false, "#ff8b94");
     } else if (event.type === "monster-defeated") {
+      effects.defeatedMonster = payload.monster || null;
+      effects.monsterDeath = MONSTER_DEATH_DURATION;
+      effects.travel = TRAVEL_TRANSITION_DURATION;
       addImpactBurst(effects.particles, WIDTH * 0.73, HEIGHT * 0.54, "#65df9a", true);
+      addLootDrop("gold", "+" + formatNumber(payload.gold), WIDTH * 0.73, HEIGHT * 0.54, "#ffd36a");
       addBattleLog(payload.monster.name + " 처치 · 골드 +" + payload.gold, "reward");
       if (payload.drop && payload.drop.dropped) {
+        if (payload.drop.item) {
+          const rarity = Data.getRarity(payload.drop.item.rarity);
+          addLootDrop("item", rarity.name, WIDTH * 0.77, HEIGHT * 0.5, rarity.color);
+        }
         if (payload.drop.autoSalvaged) {
           effects.lootGlow = 0.65;
           playSound("salvage");
@@ -1839,6 +2290,7 @@
       addBattleLog("보스전 시작: " + payload.boss.name, "boss");
     } else if (event.type === "boss-damage") {
       effects.playerAttack = PLAYER_ATTACK_DURATION;
+      effects.playerAttackVariant = payload.source === "ultimate" ? "ultimate" : payload.source === "smash" ? "smash" : payload.critical ? "critical" : "normal";
       effects.bossHit = HIT_DURATION;
       if (payload.source === "smash") {
         effects.bossSmash = BOSS_SMASH_DURATION;
@@ -2177,6 +2629,38 @@
       el.salvageButton.removeEventListener("click", handleSalvage);
     });
 
+    function updateSalvageFilter() {
+      syncSalvageFilterFromControls();
+      salvageDirty = true;
+      renderSalvage(true);
+    }
+
+    function selectFilteredSalvage() {
+      const selected = State.selectSalvageableByFilter(syncSalvageFilterFromControls());
+      salvageDirty = true;
+      renderSalvage(true);
+      showToast(formatSalvageFilterLabel(salvageFilter) + " " + selected.length + "개를 선택했습니다.", selected.length > 0 ? "success" : "info");
+    }
+
+    function clearSelectedSalvage() {
+      State.clearSalvageSelection();
+      salvageDirty = true;
+      renderSalvage(true);
+    }
+
+    el.salvageRarityFilter.addEventListener("change", updateSalvageFilter);
+    el.salvageMinLevelInput.addEventListener("change", updateSalvageFilter);
+    el.salvageMaxLevelInput.addEventListener("change", updateSalvageFilter);
+    el.salvageSelectFilteredButton.addEventListener("click", selectFilteredSalvage);
+    el.salvageClearButton.addEventListener("click", clearSelectedSalvage);
+    cleanups.push(function () {
+      el.salvageRarityFilter.removeEventListener("change", updateSalvageFilter);
+      el.salvageMinLevelInput.removeEventListener("change", updateSalvageFilter);
+      el.salvageMaxLevelInput.removeEventListener("change", updateSalvageFilter);
+      el.salvageSelectFilteredButton.removeEventListener("click", selectFilteredSalvage);
+      el.salvageClearButton.removeEventListener("click", clearSelectedSalvage);
+    });
+
     el.autoSalvageInputs.forEach(function (input) {
       function handleChange() {
         State.setAutoSalvage(input.dataset.rarity, input.checked);
@@ -2339,6 +2823,12 @@
     effects.fieldShake = 0;
     effects.criticalFlash = 0;
     effects.lootGlow = 0;
+    effects.monsterEnter = 0;
+    effects.monsterDeath = 0;
+    effects.travel = 0;
+    effects.backgroundScroll = 0;
+    effects.defeatedMonster = null;
+    effects.playerAttackVariant = "normal";
     effects.bossPlayerHit = 0;
     effects.bossHit = 0;
     effects.bossWarning = 0;
@@ -2349,6 +2839,7 @@
     effects.bossTexts = [];
     effects.particles = [];
     effects.bossParticles = [];
+    effects.lootDrops = [];
     clearChildren(el.battleLog);
     clearChildren(el.recentCombatLog);
     clearChildren(el.fullBattleLog);
@@ -2373,6 +2864,9 @@
     forgeDirty = true;
     salvageDirty = true;
     bossListDirty = true;
+    if (Combat.getRuntimeSnapshot().currentMonster) {
+      effects.monsterEnter = MONSTER_ENTER_DURATION;
+    }
     renderAll();
     renderCanvas(0);
     renderBossCanvas(0);
