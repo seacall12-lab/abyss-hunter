@@ -418,4 +418,3 @@
     STAT_META: STAT_META
   };
 })(window);
-  
