@@ -28,8 +28,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#080d18">
   <meta name="description" content="Abyss Hunter 모바일 웹 RPG">
-  <title>Abyss Hunter v0.5.6</title>
-    <link rel="stylesheet" href="style.css?v=0.5.6">
+  <title>Abyss Hunter v0.5.8</title>
+    <link rel="stylesheet" href="style.css?v=0.5.8">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -308,6 +308,24 @@
             <div><p class="eyebrow">분해</p><h2>장비 분해</h2></div>
             <button id="salvageSelectAllButton" class="secondary-button" type="button">전체 선택</button>
           </div>
+          <div class="salvage-filter-tools">
+            <div class="salvage-filter-grid">
+              <label><span>등급</span><select id="salvageRarityFilter">
+                <option value="all">전체 등급</option>
+                <option value="common">일반</option>
+                <option value="rare">희귀</option>
+                <option value="epic">영웅</option>
+                <option value="legendary">전설</option>
+              </select></label>
+              <label><span>최소 레벨</span><input id="salvageMinLevelInput" type="number" min="1" max="999" value="1" inputmode="numeric"></label>
+              <label><span>최대 레벨</span><input id="salvageMaxLevelInput" type="number" min="1" max="999" value="999" inputmode="numeric"></label>
+            </div>
+            <div class="salvage-filter-actions">
+              <button id="salvageSelectFilteredButton" class="secondary-button" type="button">조건 선택</button>
+              <button id="salvageClearButton" class="secondary-button" type="button">선택 해제</button>
+            </div>
+            <p id="salvageFilterHint" class="muted-note">조건과 일치하는 분해 가능 장비 0개</p>
+          </div>
           <div class="salvage-summary">
             <div><span>선택</span><strong id="salvageSelectedCount">0</strong></div>
             <div><span>강화석</span><strong id="salvageExpectedStones">0</strong></div>
@@ -382,7 +400,7 @@
     </main>
 
     <footer class="footer-note">
-      <span>Abyss Hunter v0.5.6</span>
+      <span>Abyss Hunter v0.5.8</span>
       <span>브라우저 자동 저장</span>
     </footer>
   </div>
@@ -523,12 +541,12 @@
     <div class="noscript-warning">이 게임은 JavaScript가 필요합니다.</div>
   </noscript>
 
-    <script src="content-data.js?v=0.5.6"></script>
-    <script src="data.js?v=0.5.6"></script>
-    <script src="state.js?v=0.5.6"></script>
-    <script src="combat.js?v=0.5.6"></script>
-    <script src="loot.js?v=0.5.6"></script>
-    <script src="ui.js?v=0.5.6"></script>
-    <script src="main.js?v=0.5.6"></script>
+    <script src="content-data.js?v=0.5.8"></script>
+    <script src="data.js?v=0.5.8"></script>
+    <script src="state.js?v=0.5.8"></script>
+    <script src="combat.js?v=0.5.8"></script>
+    <script src="loot.js?v=0.5.8"></script>
+    <script src="ui.js?v=0.5.8"></script>
+    <script src="main.js?v=0.5.8"></script>
 </body>
 </html>
