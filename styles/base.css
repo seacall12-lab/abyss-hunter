@@ -1,8 +1,9 @@
 :root {
   color-scheme: dark;
   --bg: #070b12;
-  --panel: rgba(18, 27, 44, 0.96);
-  --panel-soft: rgba(25, 37, 60, 0.9);
+  --panel: rgba(18, 27, 44, 0.78);
+  --panel-solid: #111929;
+  --panel-soft: rgba(25, 37, 60, 0.88);
   --line: rgba(175, 193, 225, 0.16);
   --line-strong: rgba(175, 193, 225, 0.34);
   --text: #f4f7ff;
@@ -26,14 +27,18 @@
 
 html,
 body {
+  width: 100%;
   height: 100%;
   margin: 0;
   overflow: hidden;
 }
 
 body {
+  display: grid;
+  place-items: center;
   background:
-    linear-gradient(180deg, #07101c 0%, #090c13 56%, #05070c 100%);
+    radial-gradient(circle at 50% 22%, rgba(67, 167, 255, 0.12), transparent 36%),
+    linear-gradient(180deg, #07101c 0%, #090c13 62%, #05070c 100%);
   color: var(--text);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   letter-spacing: 0;
@@ -41,7 +46,8 @@ body {
 }
 
 button,
-select {
+select,
+input {
   font: inherit;
 }
 
@@ -56,33 +62,40 @@ button:disabled {
 }
 
 .app-shell {
-  width: min(100%, 560px);
-  height: 100vh;
-  height: 100dvh;
-  margin: 0 auto;
-  padding: max(8px, env(safe-area-inset-top)) 10px 86px;
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  width: min(100vw, calc(100dvh * 16 / 9), 1280px);
+  height: min(100dvh, calc(100vw * 9 / 16), 720px);
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
+  border: 1px solid rgba(175, 193, 225, 0.12);
+  border-radius: 8px;
+  background: #050912;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.52);
 }
 
 .panel {
-  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+  background: var(--panel);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(12px);
 }
 
 .top-bar {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(8px, env(safe-area-inset-right));
+  z-index: 34;
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: auto auto;
   gap: 8px;
-  align-items: center;
-  padding: 12px;
-  flex: 0 0 auto;
-  position: relative;
-  z-index: 20;
-  backdrop-filter: blur(12px);
+  align-items: start;
+  padding: 8px;
+}
+
+.brand-block {
+  display: none;
 }
 
 .brand-block h1,
@@ -96,10 +109,6 @@ button:disabled {
 .boss-battle-heading h2 {
   margin: 0;
   line-height: 1.1;
-}
-
-.brand-block h1 {
-  font-size: 20px;
 }
 
 .eyebrow {
@@ -117,19 +126,19 @@ button:disabled {
 .item-utility-actions,
 .item-detail-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
 .currency-chip,
 .forge-currency-list > div {
   display: grid;
-  gap: 2px;
-  min-width: 66px;
-  padding: 7px 9px;
+  gap: 1px;
+  min-width: 62px;
+  padding: 6px 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(8, 12, 22, 0.62);
+  background: rgba(8, 12, 22, 0.74);
 }
 
 .currency-chip span,
@@ -137,6 +146,11 @@ button:disabled {
   color: var(--muted);
   font-size: 10px;
   font-weight: 700;
+}
+
+.currency-chip strong,
+.forge-currency-list strong {
+  font-size: 13px;
 }
 
 .gold-chip strong {
@@ -156,17 +170,18 @@ button:disabled {
 .speed-button,
 .forge-sub-tab,
 .view-tab,
-.boss-start-button {
+.boss-start-button,
+.menu-close-button {
+  min-height: 38px;
+  padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(27, 39, 64, 0.96);
-  min-height: 40px;
-  padding: 0 12px;
+  background: rgba(27, 39, 64, 0.9);
   font-weight: 800;
 }
 
 .icon-button {
-  width: 40px;
+  width: 38px;
   padding: 0;
 }
 
@@ -195,25 +210,28 @@ button:disabled {
 }
 
 .main-content {
-  flex: 1 1 auto;
+  position: absolute;
+  inset: 0;
+  min-width: 0;
   min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
-  margin-top: 10px;
   overflow: hidden;
 }
 
 .player-summary {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(8px, env(safe-area-inset-left));
+  z-index: 34;
+  width: min(240px, 27vw);
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
   align-items: center;
-  padding: 12px;
+  padding: 8px;
 }
 
 .level-emblem {
-  width: 58px;
+  width: 46px;
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -224,18 +242,19 @@ button:disabled {
 
 .level-emblem span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 900;
 }
 
 .level-emblem strong {
-  font-size: 24px;
+  font-size: 21px;
 }
 
 .summary-center,
 .progress-group {
+  min-width: 0;
   display: grid;
-  gap: 8px;
+  gap: 5px;
 }
 
 .summary-row,
@@ -261,7 +280,13 @@ button:disabled {
 .muted-note,
 .inventory-capacity {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
+}
+
+.summary-row .label,
+.save-status,
+.progress-group .bar-labels span:first-child {
+  display: none;
 }
 
 .save-status.saved {
@@ -269,11 +294,12 @@ button:disabled {
 }
 
 .save-status.error {
+  display: inline;
   color: var(--danger);
 }
 
 .progress-bar {
-  height: 10px;
+  height: 9px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -306,46 +332,45 @@ button:disabled {
 }
 
 .view-tabs {
-  position: fixed;
-  left: 50%;
-  right: auto;
+  position: absolute;
+  left: max(8px, env(safe-area-inset-left));
   bottom: max(8px, env(safe-area-inset-bottom));
-  top: auto;
-  width: min(calc(100% - 20px), 540px);
-  transform: translateX(-50%);
+  z-index: 36;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, 54px);
   gap: 6px;
   padding: 6px;
-  z-index: 30;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
 }
 
 .view-tab {
   position: relative;
   display: grid;
   place-items: center;
-  gap: 3px;
-  min-height: 54px;
-  padding: 6px 4px;
+  gap: 2px;
+  min-height: 50px;
+  padding: 5px 3px;
   color: var(--muted);
+}
+
+.view-tab > span:not(.view-tab-icon):not(.inventory-badge):not(.boss-ready-badge) {
+  font-size: 10px;
 }
 
 .view-tab.active {
   color: var(--text);
   border-color: rgba(102, 217, 239, 0.48);
-  background: rgba(38, 72, 104, 0.76);
+  background: rgba(38, 72, 104, 0.78);
 }
 
 .view-tab-icon {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .inventory-badge,
 .boss-ready-badge {
   position: absolute;
-  top: 4px;
-  right: 5px;
+  top: 3px;
+  right: 4px;
   min-width: 18px;
   height: 18px;
   display: grid;
@@ -356,4 +381,3 @@ button:disabled {
   font-size: 11px;
   font-weight: 900;
 }
-  
