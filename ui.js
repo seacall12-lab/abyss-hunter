@@ -364,6 +364,38 @@
     node.classList.remove("rarity-common", "rarity-rare", "rarity-epic", "rarity-legendary");
   }
 
+  function scrollIntoViewSafe(node, options) {
+    if (!node || typeof node.scrollIntoView !== "function") {
+      return;
+    }
+    const settings = Object.assign({ behavior: "smooth", block: "start", inline: "nearest" }, options || {});
+    try {
+      node.scrollIntoView(settings);
+    } catch (error) {
+      node.scrollIntoView();
+    }
+  }
+
+  function focusElementSafe(node) {
+    if (!node || typeof node.focus !== "function") {
+      return;
+    }
+    try {
+      node.focus({ preventScroll: true });
+    } catch (error) {
+      node.focus();
+    }
+  }
+
+  function getItemCardById(container, itemId) {
+    if (!container || !itemId) {
+      return null;
+    }
+    return Array.from(container.querySelectorAll("[data-item-id]")).find(function (card) {
+      return card.dataset.itemId === itemId;
+    }) || null;
+  }
+
   function setSaveStatus(text, type) {
     el.saveStatus.textContent = text;
     el.saveStatus.classList.remove("saved", "error");
@@ -684,6 +716,21 @@
     });
   }
 
+  function focusInventoryForSlot(slotId) {
+    const slot = Data.getItemSlot(slotId);
+    State.setInventoryFilters(slotId || "all", "all");
+    inventoryDirty = true;
+    renderInventory(true);
+    const panel = el.inventoryGrid.closest(".inventory-panel");
+    const firstCard = el.inventoryGrid.querySelector("[data-item-id]");
+    scrollIntoViewSafe(panel || el.inventoryGrid);
+    focusElementSafe(firstCard);
+    el.equipmentNotice.textContent = slot ? slot.name + " 장비 목록에서 교체할 장비를 선택하세요." : "인벤토리 장비를 선택하세요.";
+    if (!firstCard) {
+      showToast(slot ? slot.name + " 장비가 없습니다." : "선택할 장비가 없습니다.", "info");
+    }
+  }
+
   function createStatRows(target, rows, emptyText) {
     clearChildren(target);
     if (!rows || rows.length === 0) {
@@ -974,6 +1021,21 @@
       renderSalvage(force);
     } else if (activeForgePanel === "auto") {
       renderAutoSalvage();
+    }
+  }
+
+  function focusForgeSelectionList() {
+    activeForgePanel = "enhance";
+    renderForge(true);
+    const items = Loot.getForgeItems();
+    const selectedId = State.getState().forge.selectedItemId;
+    const selectedCard = getItemCardById(el.forgeInventoryGrid, selectedId);
+    const firstCard = el.forgeInventoryGrid.querySelector("[data-item-id]");
+    const target = selectedCard || firstCard || el.forgeInventoryPanel;
+    scrollIntoViewSafe(target);
+    focusElementSafe(selectedCard || firstCard);
+    if (items.length === 0) {
+      showToast("강화할 장비가 없습니다.", "info");
     }
   }
 
@@ -1976,7 +2038,9 @@
         const item = State.getEquippedItem(button.dataset.slot);
         if (item) {
           openItemDetail(item.id);
+          return;
         }
+        focusInventoryForSlot(button.dataset.slot);
       }
       button.addEventListener("click", handleClick);
       cleanups.push(function () {
@@ -2059,9 +2123,11 @@
       renderForge(true);
     }
     el.forgeSortButton.addEventListener("click", changeForgeSort);
+    el.forgeSelectedItem.addEventListener("click", focusForgeSelectionList);
     el.enhanceButton.addEventListener("click", handleEnhance);
     cleanups.push(function () {
       el.forgeSortButton.removeEventListener("click", changeForgeSort);
+      el.forgeSelectedItem.removeEventListener("click", focusForgeSelectionList);
       el.enhanceButton.removeEventListener("click", handleEnhance);
     });
 
