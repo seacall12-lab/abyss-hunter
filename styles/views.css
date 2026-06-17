@@ -1,173 +1,73 @@
 .game-view {
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
-  display: grid;
-  gap: 10px;
-  padding-bottom: 6px;
   overscroll-behavior: contain;
 }
 
-#equipmentView.active,
-#forgeView.active,
-#bossView.active {
-  align-content: start;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+#huntView {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
 }
 
-#bossView.active {
-  grid-template-rows: auto;
-}
-
-#bossView.active .boss-select-panel {
-  display: grid;
-  grid-template-rows: auto auto auto auto;
-  min-height: 0;
-  overflow: visible;
-}
-
-#bossView.active .boss-select-header {
-  grid-row: 1;
-}
-
-#bossView.active #bossCardList {
-  grid-row: 2;
-  min-height: auto;
-  overflow: visible;
-}
-
-#bossView.active .boss-reward-preview {
-  grid-row: 3;
-}
-
-#bossView.active #bossStartButton {
-  grid-row: 4;
-}
-
-#huntView.active {
-  grid-template-rows: minmax(0, 1fr) auto auto;
-}
-
-#huntView.active .stage-panel {
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto auto auto;
-  align-content: start;
+#huntView .stage-panel {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   overflow: hidden;
 }
 
-#huntView.active .battlefield {
-  width: min(100%, clamp(230px, calc(100dvh - 570px), 300px));
-  height: auto;
-  min-height: 0;
-  margin-top: 8px;
-  aspect-ratio: 1 / 1;
-  justify-self: center;
+#huntView .battlefield {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #08101a;
+  aspect-ratio: 16 / 9;
 }
 
-#huntView.active .info-grid {
-  display: none;
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-#huntView.active .info-grid .mini-panel:first-child,
-#huntView.active .battle-log-panel {
-  display: none;
-}
-
-#huntView.active .loot-preview {
-  min-height: 58px;
-  margin-top: 6px;
-}
-
-#equipmentView.active {
-  grid-template-rows: auto auto;
-}
-
-#forgeView.active {
-  grid-template-rows: auto auto auto auto;
-}
-
-#bossBattlePanel {
+#huntView .stage-heading {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 34;
+  width: min(360px, 34vw);
+  transform: translateX(-50%);
   display: grid;
-  grid-template-rows: auto auto auto auto auto auto;
-  align-content: start;
-  min-height: 0;
-  overflow: visible;
-}
-
-#bossBattlePanel .boss-battle-heading {
-  grid-row: 1;
-}
-
-#bossBattlePanel .boss-battlefield {
-  grid-row: 3;
-  width: min(100%, clamp(180px, calc(100dvh - 620px), 300px));
-  height: auto;
-  margin-top: 8px;
-  justify-self: center;
-}
-
-#bossBattlePanel .boss-status-grid {
-  grid-row: 2;
-}
-
-#bossBattlePanel .ultimate-gauge-block {
-  grid-row: 4;
-  min-height: auto;
-}
-
-#bossBattlePanel .boss-skill-grid {
-  grid-row: 5;
-}
-
-#bossBattlePanel #bossRetreatButton {
-  grid-row: 6;
-}
-
-.stage-panel,
-.controls-panel,
-.recent-log-strip,
-.mini-panel,
-.battle-log-panel,
-.equipment-overview,
-.inventory-panel,
-.forge-summary,
-.forge-panel,
-.forge-inventory,
-.salvage-panel,
-.auto-salvage-panel,
-.boss-select-panel,
-.boss-battle-panel {
-  padding: 12px;
-}
-
-.stage-heading,
-.combat-hud,
-.info-grid,
-.boss-status-grid {
-  display: grid;
-  gap: 8px;
-}
-
-.stage-heading,
-.combat-hud,
-.info-grid,
-.boss-status-grid {
-  grid-template-columns: 1fr 1fr;
-}
-
-.stage-heading {
   grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(8, 12, 22, 0.68);
+  backdrop-filter: blur(12px);
 }
 
 .stage-heading > div:first-child {
   min-width: 0;
 }
 
-#huntView.active .stage-heading h2 {
-  font-size: 26px;
+#huntView .stage-heading h2 {
+  overflow: hidden;
+  font-size: 18px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -175,28 +75,46 @@
 .kill-counter span {
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .kill-counter {
   text-align: right;
 }
 
-.battlefield,
-.boss-battlefield {
-  position: relative;
-  margin-top: 12px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #08101a;
-  aspect-ratio: 1 / 1;
+#huntView .combat-hud {
+  position: absolute;
+  top: calc(max(8px, env(safe-area-inset-top)) + 78px);
+  left: max(8px, env(safe-area-inset-left));
+  z-index: 34;
+  width: min(300px, 28vw);
+  display: grid;
+  gap: 6px;
 }
 
-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
+.combatant-card,
+.boss-status-grid article {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(9, 14, 24, 0.62);
+  backdrop-filter: blur(10px);
+}
+
+.monster-card {
+  background: rgba(32, 16, 23, 0.58);
+}
+
+.combatant-title strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact {
+  margin: 5px 0 4px;
 }
 
 .pause-overlay,
@@ -209,13 +127,365 @@ canvas {
   gap: 6px;
   padding: 20px;
   text-align: center;
-  background: rgba(5, 8, 14, 0.72);
+  background: rgba(5, 8, 14, 0.66);
 }
 
 .pause-overlay[hidden],
 .boss-warning-overlay[hidden],
 .boss-result-overlay[hidden] {
   display: none;
+}
+
+.level-up-banner {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  z-index: 35;
+  transform: translateX(-50%) translateY(-16px);
+  opacity: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: #08101b;
+  background: var(--gold);
+  font-weight: 1000;
+  pointer-events: none;
+}
+
+.level-up-banner.show {
+  animation: levelup 1100ms ease both;
+}
+
+@keyframes levelup {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-18px); }
+  18% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+}
+
+#huntView .controls-panel {
+  position: absolute;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 36;
+  width: min(252px, 24vw);
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+}
+
+#huntView .controls-panel .section-title-row {
+  display: none;
+}
+
+.speed-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.speed-button.active {
+  color: #07101b;
+  background: var(--accent);
+}
+
+.hunt-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+#huntView .recent-log-strip {
+  position: absolute;
+  left: 50%;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 34;
+  width: min(390px, 30vw);
+  min-height: 42px;
+  transform: translateX(-50%);
+  padding: 8px 10px;
+}
+
+#huntView .recent-combat-log li:nth-child(n + 3) {
+  display: none;
+}
+
+#huntView .info-grid,
+#huntView .battle-log-panel {
+  display: none;
+}
+
+.recent-combat-log {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recent-combat-log:empty::before {
+  content: "전투 기록이 여기에 표시됩니다.";
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.recent-combat-log li {
+  overflow: hidden;
+  padding: 4px 8px;
+  border-left: 3px solid var(--line-strong);
+  border-radius: 6px;
+  background: rgba(7, 12, 22, 0.58);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-combat-log li.reward,
+.recent-combat-log li.loot {
+  border-left-color: var(--success);
+}
+
+.recent-combat-log li.danger {
+  border-left-color: var(--danger);
+}
+
+.recent-combat-log li.boss {
+  border-left-color: var(--stone);
+}
+
+#equipmentView.active,
+#forgeView.active,
+#bossView.active {
+  position: absolute;
+  inset: 0;
+  z-index: 44;
+  min-width: 0;
+  min-height: 0;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  overflow: hidden;
+  background: rgba(4, 7, 13, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.menu-close-button {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 3;
+}
+
+#equipmentView.active {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.36fr) minmax(0, 1fr);
+  gap: 10px;
+  padding-top: calc(max(12px, env(safe-area-inset-top)) + 48px);
+}
+
+#equipmentView.active .equipment-overview,
+#equipmentView.active .inventory-panel,
+#forgeView.active .forge-summary,
+#forgeView.active .forge-sub-tabs,
+#forgeView.active .forge-content-panel,
+#bossView.active .boss-select-panel {
+  min-height: 0;
+  padding: 12px;
+}
+
+#equipmentView.active .equipment-overview {
+  overflow: hidden;
+}
+
+#equipmentView.active .inventory-panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+#equipmentView.active #inventoryGrid,
+#equipmentView.active #inventoryEmpty {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+#forgeView.active {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.22fr) minmax(250px, 0.3fr) minmax(0, 0.48fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  padding-top: calc(max(12px, env(safe-area-inset-top)) + 48px);
+}
+
+#forgeView.active .forge-summary {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+#forgeView.active .forge-sub-tabs {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: start;
+}
+
+#forgeEnhancePanel,
+#forgeSalvagePanel,
+#forgeAutoSalvagePanel {
+  grid-column: 2 / 4;
+  grid-row: 1 / 3;
+  overflow: hidden;
+}
+
+#forgeEnhancePanel:not([hidden]) {
+  grid-column: 2;
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+}
+
+#forgeInventoryPanel:not([hidden]) {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+#forgeInventoryPanel #forgeInventoryGrid,
+#forgeInventoryPanel #forgeInventoryEmpty {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+#forgeSalvagePanel:not([hidden]) {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+}
+
+#forgeSalvagePanel #salvageInventoryGrid {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+#forgeAutoSalvagePanel:not([hidden]) {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+#forgeAutoSalvagePanel .auto-salvage-options {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+#bossView.active {
+  display: grid;
+  place-items: stretch;
+}
+
+#bossView.active .boss-select-panel {
+  position: relative;
+  width: min(920px, 100%);
+  height: 100%;
+  justify-self: center;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 10px;
+  overflow: hidden;
+  padding-top: 48px;
+}
+
+#bossView.active #bossCardList {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+#bossBattlePanel:not([hidden]) {
+  position: absolute;
+  inset: 0;
+  z-index: 48;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #050912;
+  overflow: hidden;
+}
+
+#bossBattlePanel .boss-battlefield {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: #08101a;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+}
+
+#bossBattlePanel .boss-battle-heading {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 4;
+  width: min(340px, 36vw);
+  transform: translateX(-50%);
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(8, 12, 22, 0.68);
+  backdrop-filter: blur(12px);
+}
+
+#bossBattlePanel .boss-status-grid {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(8px, env(safe-area-inset-left));
+  z-index: 4;
+  width: min(300px, 28vw);
+  display: grid;
+  gap: 6px;
+}
+
+#bossBattlePanel .ultimate-gauge-block {
+  position: absolute;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: calc(max(8px, env(safe-area-inset-bottom)) + 74px);
+  z-index: 4;
+  width: min(360px, 33vw);
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(8, 12, 22, 0.68);
+  backdrop-filter: blur(12px);
+}
+
+#bossBattlePanel .boss-skill-grid {
+  position: absolute;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 4;
+  width: min(520px, 44vw);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+#bossBattlePanel #bossRetreatButton {
+  position: absolute;
+  left: max(8px, env(safe-area-inset-left));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 4;
+}
+
+.boss-warning-overlay,
+.boss-result-overlay {
+  z-index: 6;
 }
 
 .boss-warning-overlay {
@@ -245,99 +515,31 @@ canvas {
   border-color: rgba(140, 240, 255, 0.5);
 }
 
-.level-up-banner {
-  position: absolute;
-  left: 50%;
-  top: 18px;
-  transform: translateX(-50%) translateY(-16px);
-  opacity: 0;
-  padding: 8px 14px;
-  border-radius: 8px;
-  color: #08101b;
-  background: var(--gold);
-  font-weight: 1000;
-  pointer-events: none;
-}
-
-.level-up-banner.show {
-  animation: levelup 1100ms ease both;
-}
-
-@keyframes levelup {
-  0% { opacity: 0; transform: translateX(-50%) translateY(-18px); }
-  18% { opacity: 1; transform: translateX(-50%) translateY(0); }
-  80% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(-50%) translateY(-12px); }
-}
-
-.combat-hud {
-  margin-top: 10px;
-}
-
-#huntView.active .controls-panel {
+.battle-log {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 8px;
-  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.battle-log li {
   padding: 8px;
-}
-
-#huntView.active .controls-panel .section-title-row {
-  display: none;
-}
-
-#huntView.active .speed-buttons,
-#huntView.active .hunt-quick-actions {
-  margin-top: 0;
-}
-
-#huntView.active .recent-log-strip {
-  min-height: 42px;
-  padding: 8px 10px;
-}
-
-#huntView.active .recent-combat-log li:nth-child(n + 3) {
-  display: none;
-}
-
-.combatant-card,
-.boss-status-grid article {
-  min-width: 0;
-  padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(9, 14, 24, 0.58);
+  background: rgba(7, 12, 22, 0.58);
+  font-size: 12px;
 }
 
-.combatant-title strong {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.battle-log li.reward,
+.battle-log li.loot {
+  border-color: rgba(101, 223, 154, 0.34);
 }
 
-.compact {
-  margin: 7px 0 5px;
+.battle-log li.danger {
+  border-color: rgba(255, 111, 121, 0.4);
 }
 
-.speed-buttons {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+.battle-log li.boss {
+  border-color: rgba(173, 146, 255, 0.5);
 }
-
-.hunt-quick-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.speed-button.active {
-  color: #07101b;
-  background: var(--accent);
-}
-
-.recent-log-strip {
-  min-height: 54px;
-}
-  
