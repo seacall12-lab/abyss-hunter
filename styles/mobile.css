@@ -88,6 +88,7 @@
   .boss-status-grid,
   .equipment-grid,
   .inventory-filters,
+  .salvage-filter-grid,
   .enhance-preview-grid,
   .salvage-summary {
     grid-template-columns: 1fr;
