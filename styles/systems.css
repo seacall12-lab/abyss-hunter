@@ -147,14 +147,14 @@ dd {
 #equipmentView.active .inventory-panel {
   min-height: 0;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  overflow: hidden;
+  grid-template-rows: auto auto auto auto;
+  overflow: visible;
 }
 
 #equipmentView.active #inventoryGrid,
 #equipmentView.active #inventoryEmpty {
-  min-height: 0;
-  overflow: auto;
+  min-height: auto;
+  overflow: visible;
 }
 
 .equipment-grid {
@@ -334,9 +334,9 @@ select {
 
 #forgeInventoryPanel {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   grid-row: 4;
 }
 
@@ -347,15 +347,15 @@ select {
 #forgeInventoryPanel #forgeInventoryGrid,
 #forgeInventoryPanel #forgeInventoryEmpty {
   grid-row: 2;
-  min-height: 0;
-  overflow: auto;
+  min-height: auto;
+  overflow: visible;
 }
 
 #forgeSalvagePanel {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto auto auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   grid-row: 3 / 5;
 }
 
@@ -370,8 +370,8 @@ select {
 #forgeSalvagePanel #salvageInventoryGrid,
 #forgeSalvagePanel #salvageInventoryGrid {
   grid-row: 3;
-  min-height: 0;
-  overflow: auto;
+  min-height: auto;
+  overflow: visible;
 }
 
 #forgeSalvagePanel #salvageButton {
@@ -384,9 +384,9 @@ select {
 
 #forgeAutoSalvagePanel {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   grid-row: 3 / 5;
 }
 
@@ -396,8 +396,8 @@ select {
 
 #forgeAutoSalvagePanel .auto-salvage-options {
   grid-row: 2;
-  min-height: 0;
-  overflow: auto;
+  min-height: auto;
+  overflow: visible;
 }
 
 .forge-selected-item {
@@ -558,7 +558,7 @@ select {
 }
 
 .boss-status-grid {
-  margin-top: 10px;
+  margin-top: 8px;
   flex-shrink: 0;
 }
 
