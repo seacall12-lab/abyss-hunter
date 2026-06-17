@@ -18,7 +18,7 @@
     maxLevel: CONFIG.MAX_LEVEL
   };
 
-  const WIDTH = 720;
+  const WIDTH = 1280;
   const HEIGHT = 720;
   const PLAYER_ATTACK_DURATION = 0.38;
   const MONSTER_ATTACK_DURATION = 0.36;
@@ -83,9 +83,11 @@
 
   function cacheElements() {
     const requiredIds = [
+      "app",
       "goldAmount",
       "enhancementStoneAmount",
       "settingsButton",
+      "fullscreenButton",
       "pauseButton",
       "resetButton",
       "playerLevel",
@@ -279,6 +281,7 @@
     }
     el.speedButtons = Array.from(document.querySelectorAll(".speed-button"));
     el.viewTabs = Array.from(document.querySelectorAll(".view-tab[data-view]"));
+    el.menuCloseButtons = Array.from(document.querySelectorAll("[data-close-menu]"));
     el.forgeTabButtons = Array.from(document.querySelectorAll(".forge-sub-tab[data-forge-panel]"));
     el.forgePanels = Array.from(document.querySelectorAll(".forge-content-panel[data-forge-panel]"));
     el.equipmentSlots = Array.from(document.querySelectorAll(".equipment-slot[data-slot]"));
@@ -703,8 +706,10 @@
     CONFIG.VIEW_IDS.forEach(function (viewId) {
       const view = el[viewId + "View"];
       if (view) {
-        view.hidden = settings.activeView !== viewId;
-        view.classList.toggle("active", settings.activeView === viewId);
+        const active = viewId === "hunt" || settings.activeView === viewId;
+        view.hidden = !active;
+        view.classList.toggle("active", active);
+        view.classList.toggle("menu-overlay", viewId !== "hunt" && settings.activeView === viewId);
       }
     });
   }
@@ -2417,6 +2422,37 @@
       openUtilitySheet("settings");
       renderSettings();
     }
+    function toggleFullscreen() {
+      unlockAudio();
+      const root = el.app || document.documentElement;
+      const request = root.requestFullscreen || root.webkitRequestFullscreen || root.msRequestFullscreen;
+      const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+          if (exit) {
+            const result = exit.call(document);
+            if (result && typeof result.catch === "function") {
+              result.catch(function () {
+                showToast("전체화면을 종료할 수 없습니다.", "error");
+              });
+            }
+          }
+          return;
+        }
+        if (!request) {
+          showToast("이 브라우저는 전체화면을 지원하지 않습니다.", "info");
+          return;
+        }
+        const result = request.call(root);
+        if (result && typeof result.catch === "function") {
+          result.catch(function () {
+            showToast("전체화면 전환이 차단되었습니다.", "error");
+          });
+        }
+      } catch (error) {
+        showToast("전체화면 전환이 차단되었습니다.", "error");
+      }
+    }
     function openStatsSheet() {
       openUtilitySheet("stats");
       renderPlayer();
@@ -2426,6 +2462,7 @@
     }
     el.pauseButton.addEventListener("click", pauseGame);
     el.settingsButton.addEventListener("click", openSettingsSheet);
+    el.fullscreenButton.addEventListener("click", toggleFullscreen);
     el.resetButton.addEventListener("click", resetGame);
     el.clearLogButton.addEventListener("click", clearLog);
     el.logSheetClearButton.addEventListener("click", clearLog);
@@ -2440,6 +2477,7 @@
     cleanups.push(function () {
       el.pauseButton.removeEventListener("click", pauseGame);
       el.settingsButton.removeEventListener("click", openSettingsSheet);
+      el.fullscreenButton.removeEventListener("click", toggleFullscreen);
       el.resetButton.removeEventListener("click", resetGame);
       el.clearLogButton.removeEventListener("click", clearLog);
       el.logSheetClearButton.removeEventListener("click", clearLog);
@@ -2472,6 +2510,17 @@
       button.addEventListener("click", handleClick);
       cleanups.push(function () {
         button.removeEventListener("click", handleClick);
+      });
+    });
+
+    el.menuCloseButtons.forEach(function (button) {
+      function closeMenu() {
+        State.setActiveView("hunt");
+        renderAll();
+      }
+      button.addEventListener("click", closeMenu);
+      cleanups.push(function () {
+        button.removeEventListener("click", closeMenu);
       });
     });
 
