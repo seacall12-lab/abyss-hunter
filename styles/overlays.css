@@ -2,8 +2,14 @@
 .enhance-result-overlay,
 .utility-sheet-overlay {
   position: fixed;
-  inset: 0;
+  top: 50%;
+  left: 50%;
+  width: 1280px;
+  height: 720px;
   z-index: 50;
+  overflow: hidden;
+  transform: translate(-50%, -50%) scale(var(--game-scale, 1));
+  transform-origin: center center;
 }
 
 .item-detail-overlay[hidden],
@@ -23,18 +29,16 @@
 .item-detail-sheet {
   position: absolute;
   left: 50%;
-  bottom: 0;
-  width: min(100%, 560px);
-  display: block;
-  max-height: 88vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  bottom: 24px;
+  width: 560px;
+  display: grid;
+  grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto auto;
+  max-height: 660px;
+  overflow: hidden;
   transform: translateX(-50%);
-  padding: 10px 14px max(18px, env(safe-area-inset-bottom));
+  padding: 10px 14px 18px;
   border: 1px solid var(--line);
-  border-radius: 8px 8px 0 0;
+  border-radius: 8px;
   background: #111929;
 }
 
@@ -67,10 +71,16 @@
 }
 
 .utility-sheet {
+  left: 50%;
+  top: 50%;
+  bottom: auto;
+  width: 680px;
+  height: 600px;
   display: grid;
   gap: 10px;
   grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
+  transform: translate(-50%, -50%);
 }
 
 .utility-sheet > :first-child {
@@ -79,20 +89,26 @@
 
 .utility-sheet .settings-list {
   grid-row: 2;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .utility-sheet .stat-list {
   grid-row: 2;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .utility-sheet ol {
   grid-row: 2;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .sheet-stat-list {
@@ -205,7 +221,7 @@
 }
 
 .enhance-result-card {
-  width: min(86vw, 320px);
+  width: 320px;
   display: grid;
   gap: 8px;
   place-items: center;
@@ -229,9 +245,9 @@
 .toast-container {
   position: fixed;
   left: 50%;
-  bottom: max(86px, calc(86px + env(safe-area-inset-bottom)));
+  bottom: 86px;
   z-index: 70;
-  width: min(94vw, 520px);
+  width: 520px;
   transform: translateX(-50%);
   display: grid;
   gap: 8px;
