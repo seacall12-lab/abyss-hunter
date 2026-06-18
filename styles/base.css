@@ -31,6 +31,7 @@ body {
   height: 100%;
   margin: 0;
   overflow: hidden;
+  touch-action: manipulation;
 }
 
 body {
@@ -74,6 +75,27 @@ button:disabled {
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.52);
 }
 
+.app-shell:fullscreen,
+.app-shell.is-fullscreen {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.app-shell:-webkit-full-screen {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .panel {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -87,11 +109,12 @@ button:disabled {
   top: max(8px, env(safe-area-inset-top));
   right: max(8px, env(safe-area-inset-right));
   z-index: 34;
-  display: grid;
-  grid-template-columns: auto auto;
+  display: flex;
   gap: 8px;
-  align-items: start;
-  padding: 8px;
+  align-items: center;
+  padding: 6px;
+  border-color: rgba(175, 193, 225, 0.12);
+  background: rgba(5, 9, 18, 0.5);
 }
 
 .brand-block {
@@ -130,15 +153,19 @@ button:disabled {
   align-items: center;
 }
 
+.top-actions {
+  padding-left: 2px;
+}
+
 .currency-chip,
 .forge-currency-list > div {
   display: grid;
   gap: 1px;
-  min-width: 62px;
-  padding: 6px 8px;
+  min-width: 58px;
+  padding: 5px 7px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(8, 12, 22, 0.74);
+  background: rgba(8, 12, 22, 0.62);
 }
 
 .currency-chip span,
@@ -185,6 +212,18 @@ button:disabled {
   padding: 0;
 }
 
+.top-actions .icon-button {
+  width: 34px;
+  min-height: 34px;
+  font-size: 12px;
+}
+
+.icon-button.active {
+  color: #06101b;
+  border-color: transparent;
+  background: var(--accent);
+}
+
 .danger,
 .danger-button,
 .text-danger-button {
@@ -222,16 +261,18 @@ button:disabled {
   top: max(8px, env(safe-area-inset-top));
   left: max(8px, env(safe-area-inset-left));
   z-index: 34;
-  width: min(240px, 27vw);
+  width: min(216px, 24vw);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 8px;
   align-items: center;
-  padding: 8px;
+  padding: 7px;
+  border-color: rgba(175, 193, 225, 0.12);
+  background: rgba(5, 9, 18, 0.5);
 }
 
 .level-emblem {
-  width: 46px;
+  width: 42px;
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -247,7 +288,7 @@ button:disabled {
 }
 
 .level-emblem strong {
-  font-size: 21px;
+  font-size: 19px;
 }
 
 .summary-center,
@@ -337,9 +378,11 @@ button:disabled {
   bottom: max(8px, env(safe-area-inset-bottom));
   z-index: 36;
   display: grid;
-  grid-template-columns: repeat(4, 54px);
+  grid-template-columns: repeat(4, 48px);
   gap: 6px;
   padding: 6px;
+  border-color: rgba(175, 193, 225, 0.12);
+  background: rgba(5, 9, 18, 0.5);
 }
 
 .view-tab {
@@ -350,6 +393,14 @@ button:disabled {
   min-height: 50px;
   padding: 5px 3px;
   color: var(--muted);
+}
+
+.view-tab[data-view="hunt"] {
+  display: none;
+}
+
+.view-tabs {
+  grid-template-columns: repeat(3, 48px);
 }
 
 .view-tab > span:not(.view-tab-icon):not(.inventory-badge):not(.boss-ready-badge) {
