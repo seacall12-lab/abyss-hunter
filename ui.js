@@ -688,7 +688,7 @@
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
-    el.pauseButton.textContent = settings.paused ? "재개" : "정지";
+    el.pauseButton.textContent = settings.paused ? "▶" : "Ⅱ";
     el.pauseButton.title = settings.paused ? "재개" : "일시정지";
     el.pauseOverlay.hidden = !settings.paused;
     el.soundToggle.checked = Boolean(settings.soundEnabled);
@@ -1307,12 +1307,7 @@
   }
 
   function updateGameScale() {
-    const scale = Math.min(
-      window.innerWidth / WIDTH,
-      window.innerHeight / HEIGHT
-    );
-    const normalized = Math.max(0.1, Math.min(2, Number.isFinite(scale) ? scale : 1));
-    const value = normalized.toFixed(4);
+    const value = "1";
     document.documentElement.style.setProperty("--game-scale", value);
     if (el.app) {
       el.app.style.setProperty("--game-scale", value);
@@ -2448,7 +2443,7 @@
         tryUnlockOrientation();
       }
       el.fullscreenButton.classList.toggle("active", active);
-      el.fullscreenButton.textContent = active ? "EXIT" : "FS";
+      el.fullscreenButton.textContent = active ? "×" : "⛶";
       el.fullscreenButton.title = active ? "Exit fullscreen" : "Fullscreen";
       el.fullscreenButton.setAttribute("aria-label", active ? "Exit fullscreen" : "Fullscreen");
       resizeCanvas();
