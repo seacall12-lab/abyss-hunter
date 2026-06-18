@@ -1306,7 +1306,21 @@
     }
   }
 
+  function updateGameScale() {
+    const scale = Math.min(
+      window.innerWidth / WIDTH,
+      window.innerHeight / HEIGHT
+    );
+    const normalized = Math.max(0.1, Math.min(2, Number.isFinite(scale) ? scale : 1));
+    const value = normalized.toFixed(4);
+    document.documentElement.style.setProperty("--game-scale", value);
+    if (el.app) {
+      el.app.style.setProperty("--game-scale", value);
+    }
+  }
+
   function resizeCanvas() {
+    updateGameScale();
     const ratio = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
     [canvas, bossCanvas].forEach(function (target) {
       if (!target) {
