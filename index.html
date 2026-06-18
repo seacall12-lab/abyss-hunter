@@ -49,10 +49,10 @@
         </div>
       </div>
       <div class="top-actions">
-        <button id="settingsButton" class="icon-button" type="button" aria-label="설정">설</button>
-        <button id="fullscreenButton" class="icon-button" type="button" aria-label="전체화면">확</button>
-        <button id="pauseButton" class="icon-button" type="button" aria-label="일시정지">정지</button>
-        <button id="resetButton" class="icon-button danger" type="button" aria-label="초기화">초</button>
+        <button id="settingsButton" class="icon-button" type="button" aria-label="설정"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Zm8.5 3.8-2.1-1 .1-2.3-2.3-.8-1.5-1.8-2 1-2-1-1.5 1.8-2.3.8.1 2.3-2.1 1 2.1 1-.1 2.3 2.3.8 1.5 1.8 2-1 2 1 1.5-1.8 2.3-.8-.1-2.3 2.1-1Z"/></svg></button>
+        <button id="fullscreenButton" class="icon-button" type="button" aria-label="전체화면">FS</button>
+        <button id="pauseButton" class="icon-button" type="button" aria-label="일시정지">Ⅱ</button>
+        <button id="resetButton" class="icon-button danger" type="button" aria-label="초기화">↺</button>
       </div>
     </header>
 
@@ -84,20 +84,20 @@
 
       <nav class="view-tabs panel" aria-label="화면 탭">
         <button class="view-tab active" type="button" data-view="hunt" aria-pressed="true">
-          <span class="view-tab-icon">사</span>
+          <span class="view-tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20 18.5 6.5 17 5 3.5 18.5 5 20Zm10.5-15 3.5-1 1 3.5-2 2L13.5 5l2-2Z"/></svg></span>
           <span>사냥</span>
         </button>
         <button class="view-tab" type="button" data-view="equipment" aria-pressed="false">
-          <span class="view-tab-icon">장</span>
+          <span class="view-tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v6c0 4.2 2.7 7.8 7 9 4.3-1.2 7-4.8 7-9V6l-7-3Zm0 4 3 1.2V12c0 2.1-1.1 3.9-3 5-1.9-1.1-3-2.9-3-5V8.2L12 7Z"/></svg></span>
           <span>장비</span>
           <span id="inventoryBadge" class="inventory-badge" hidden>0</span>
         </button>
         <button class="view-tab" type="button" data-view="forge" aria-pressed="false">
-          <span class="view-tab-icon">강</span>
+          <span class="view-tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 13h6l-1 9 10-12h-6l0-8Z"/></svg></span>
           <span>강화</span>
         </button>
         <button class="view-tab boss-tab" type="button" data-view="boss" aria-pressed="false">
-          <span class="view-tab-icon">보</span>
+          <span class="view-tab-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v6c0 4 3 7 8 8 5-1 8-4 8-8V7l-8-4Zm-4 8 2-2 2 2 2-2 2 2-2 5h-4l-2-5Z"/></svg></span>
           <span>보스</span>
           <span id="bossReadyBadge" class="boss-ready-badge" hidden>!</span>
         </button>
@@ -161,13 +161,13 @@
             </div>
           </div>
           <div class="speed-buttons" role="group" aria-label="전투 배속">
-            <button class="speed-button active" type="button" data-speed="1">1배</button>
-            <button class="speed-button" type="button" data-speed="2">2배</button>
-            <button class="speed-button" type="button" data-speed="3">3배</button>
+            <button class="speed-button active" type="button" data-speed="1">1x</button>
+            <button class="speed-button" type="button" data-speed="2">2x</button>
+            <button class="speed-button" type="button" data-speed="3">3x</button>
           </div>
           <div class="hunt-quick-actions">
-            <button id="statsSheetButton" class="secondary-button" type="button">능력치</button>
-            <button id="logSheetButton" class="secondary-button" type="button">기록</button>
+            <button id="statsSheetButton" class="secondary-button" type="button" aria-label="능력치">능</button>
+            <button id="logSheetButton" class="secondary-button" type="button" aria-label="기록">기</button>
           </div>
         </section>
 
