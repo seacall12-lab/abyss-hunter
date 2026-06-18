@@ -2,7 +2,7 @@
   display: none;
 }
 
-@media (orientation: portrait) and (max-width: 900px) {
+@media (orientation: landscape) and (max-height: 520px) {
   .app-shell {
     visibility: hidden;
   }
