@@ -26,8 +26,6 @@
 #huntView .battlefield {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
   width: 100%;
   height: 100%;
   margin: 0;
@@ -39,10 +37,8 @@
 
 canvas {
   display: block;
-  width: min(100%, calc(100dvh * 16 / 9));
-  height: min(100%, calc(100vw * 9 / 16));
-  max-width: 100%;
-  max-height: 100%;
+  width: 1280px;
+  height: 720px;
   aspect-ratio: 16 / 9;
   object-fit: contain;
   background: #08101a;
@@ -50,10 +46,10 @@ canvas {
 
 #huntView .stage-heading {
   position: absolute;
-  top: max(8px, env(safe-area-inset-top));
+  top: 12px;
   left: 50%;
   z-index: 34;
-  width: min(310px, 32vw);
+  width: 320px;
   transform: translateX(-50%);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -90,10 +86,10 @@ canvas {
 
 #huntView .combat-hud {
   position: absolute;
-  top: calc(max(8px, env(safe-area-inset-top)) + 58px);
-  left: max(8px, env(safe-area-inset-left));
+  top: 78px;
+  left: 12px;
   z-index: 34;
-  width: min(250px, 24vw);
+  width: 250px;
   display: grid;
   gap: 6px;
 }
@@ -170,10 +166,10 @@ canvas {
 
 #huntView .controls-panel {
   position: absolute;
-  right: max(8px, env(safe-area-inset-right));
-  bottom: max(8px, env(safe-area-inset-bottom));
+  right: 12px;
+  bottom: 12px;
   z-index: 36;
-  width: min(220px, 22vw);
+  width: 220px;
   display: grid;
   gap: 8px;
   padding: 6px;
@@ -204,9 +200,9 @@ canvas {
 #huntView .recent-log-strip {
   position: absolute;
   left: 50%;
-  bottom: max(8px, env(safe-area-inset-bottom));
+  bottom: 12px;
   z-index: 34;
-  width: min(330px, 30vw);
+  width: 330px;
   min-height: 38px;
   transform: translateX(-50%);
   padding: 6px 8px;
@@ -267,29 +263,32 @@ canvas {
   position: absolute;
   inset: 0;
   z-index: 44;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: 1fr;
+  gap: 12px;
   min-width: 0;
   min-height: 0;
-  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  padding: 18px;
+  overflow: hidden;
   background: rgba(4, 7, 13, 0.78);
   backdrop-filter: blur(10px);
+  pointer-events: auto;
 }
 
 .menu-close-button {
   position: absolute;
-  top: max(12px, env(safe-area-inset-top));
-  right: max(12px, env(safe-area-inset-right));
-  z-index: 3;
+  top: 18px;
+  right: 18px;
+  z-index: 5;
 }
 
 #equipmentView.active {
   display: grid;
-  grid-template-columns: minmax(250px, 0.36fr) minmax(0, 1fr);
-  gap: 10px;
-  padding-top: calc(max(12px, env(safe-area-inset-top)) + 48px);
+  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 14px;
+  padding-top: 72px;
 }
 
 #equipmentView.active .equipment-overview,
@@ -308,22 +307,25 @@ canvas {
 
 #equipmentView.active .inventory-panel {
   display: grid;
-  grid-template-rows: auto auto auto auto;
-  overflow: visible;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 #equipmentView.active #inventoryGrid,
 #equipmentView.active #inventoryEmpty {
   min-height: 0;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 #forgeView.active {
   display: grid;
-  grid-template-columns: minmax(190px, 0.22fr) minmax(250px, 0.3fr) minmax(0, 0.48fr);
+  grid-template-columns: 220px 330px minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
-  padding-top: calc(max(12px, env(safe-area-inset-top)) + 48px);
+  gap: 14px;
+  padding-top: 72px;
 }
 
 #forgeView.active .forge-summary {
@@ -342,7 +344,8 @@ canvas {
 #forgeAutoSalvagePanel {
   grid-column: 2 / 4;
   grid-row: 1 / 3;
-  overflow: visible;
+  overflow: hidden;
+  min-height: 0;
 }
 
 #forgeEnhancePanel:not([hidden]) {
@@ -355,14 +358,17 @@ canvas {
   grid-column: 3;
   grid-row: 1 / 3;
   display: grid;
-  grid-template-rows: auto auto;
-  overflow: visible;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
 }
 
 #forgeInventoryPanel #forgeInventoryGrid,
 #forgeInventoryPanel #forgeInventoryEmpty {
   min-height: 0;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 #forgeSalvagePanel:not([hidden]) {
@@ -372,7 +378,9 @@ canvas {
 
 #forgeSalvagePanel #salvageInventoryGrid {
   min-height: 0;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 #forgeAutoSalvagePanel:not([hidden]) {
@@ -382,7 +390,9 @@ canvas {
 
 #forgeAutoSalvagePanel .auto-salvage-options {
   min-height: 0;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 #bossView.active {
@@ -392,19 +402,21 @@ canvas {
 
 #bossView.active .boss-select-panel {
   position: relative;
-  width: min(920px, 100%);
-  min-height: 100%;
+  width: 920px;
+  height: 100%;
   justify-self: center;
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   gap: 10px;
-  overflow: visible;
+  overflow: hidden;
   padding-top: 48px;
 }
 
 #bossView.active #bossCardList {
   min-height: 0;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 #bossBattlePanel:not([hidden]) {
@@ -422,8 +434,6 @@ canvas {
 #bossBattlePanel .boss-battlefield {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
   width: 100%;
   height: 100%;
   margin: 0;
@@ -435,10 +445,10 @@ canvas {
 
 #bossBattlePanel .boss-battle-heading {
   position: absolute;
-  top: max(8px, env(safe-area-inset-top));
+  top: 12px;
   left: 50%;
   z-index: 4;
-  width: min(340px, 36vw);
+  width: 340px;
   transform: translateX(-50%);
   padding: 8px 10px;
   border: 1px solid var(--line);
@@ -449,20 +459,20 @@ canvas {
 
 #bossBattlePanel .boss-status-grid {
   position: absolute;
-  top: calc(max(8px, env(safe-area-inset-top)) + 58px);
-  left: max(8px, env(safe-area-inset-left));
+  top: 78px;
+  left: 12px;
   z-index: 4;
-  width: min(250px, 24vw);
+  width: 250px;
   display: grid;
   gap: 6px;
 }
 
 #bossBattlePanel .ultimate-gauge-block {
   position: absolute;
-  right: max(8px, env(safe-area-inset-right));
-  bottom: calc(max(8px, env(safe-area-inset-bottom)) + 74px);
+  right: 12px;
+  bottom: 94px;
   z-index: 4;
-  width: min(360px, 33vw);
+  width: 360px;
   padding: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -472,10 +482,10 @@ canvas {
 
 #bossBattlePanel .boss-skill-grid {
   position: absolute;
-  right: max(8px, env(safe-area-inset-right));
-  bottom: max(8px, env(safe-area-inset-bottom));
+  right: 12px;
+  bottom: 12px;
   z-index: 4;
-  width: min(520px, 44vw);
+  width: 520px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
@@ -483,8 +493,8 @@ canvas {
 
 #bossBattlePanel #bossRetreatButton {
   position: absolute;
-  left: max(8px, env(safe-area-inset-left));
-  bottom: max(8px, env(safe-area-inset-bottom));
+  left: 12px;
+  bottom: 12px;
   z-index: 4;
 }
 
