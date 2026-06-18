@@ -26,20 +26,26 @@
 #huntView .battlefield {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
   width: 100%;
   height: 100%;
   margin: 0;
   overflow: hidden;
   border: 0;
   border-radius: 0;
-  background: #08101a;
-  aspect-ratio: 16 / 9;
+  background: #04070d;
 }
 
 canvas {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: min(100%, calc(100dvh * 16 / 9));
+  height: min(100%, calc(100vw * 9 / 16));
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #08101a;
 }
 
 #huntView .stage-heading {
@@ -47,16 +53,16 @@ canvas {
   top: max(8px, env(safe-area-inset-top));
   left: 50%;
   z-index: 34;
-  width: min(360px, 34vw);
+  width: min(310px, 32vw);
   transform: translateX(-50%);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
-  padding: 8px 10px;
+  padding: 7px 9px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(8, 12, 22, 0.68);
+  background: rgba(8, 12, 22, 0.52);
   backdrop-filter: blur(12px);
 }
 
@@ -66,7 +72,7 @@ canvas {
 
 #huntView .stage-heading h2 {
   overflow: hidden;
-  font-size: 18px;
+  font-size: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -84,10 +90,10 @@ canvas {
 
 #huntView .combat-hud {
   position: absolute;
-  top: calc(max(8px, env(safe-area-inset-top)) + 78px);
+  top: calc(max(8px, env(safe-area-inset-top)) + 58px);
   left: max(8px, env(safe-area-inset-left));
   z-index: 34;
-  width: min(300px, 28vw);
+  width: min(250px, 24vw);
   display: grid;
   gap: 6px;
 }
@@ -95,10 +101,10 @@ canvas {
 .combatant-card,
 .boss-status-grid article {
   min-width: 0;
-  padding: 8px;
+  padding: 7px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(9, 14, 24, 0.62);
+  background: rgba(9, 14, 24, 0.5);
   backdrop-filter: blur(10px);
 }
 
@@ -167,10 +173,12 @@ canvas {
   right: max(8px, env(safe-area-inset-right));
   bottom: max(8px, env(safe-area-inset-bottom));
   z-index: 36;
-  width: min(252px, 24vw);
+  width: min(220px, 22vw);
   display: grid;
   gap: 8px;
-  padding: 8px;
+  padding: 6px;
+  border-color: rgba(175, 193, 225, 0.12);
+  background: rgba(5, 9, 18, 0.5);
 }
 
 #huntView .controls-panel .section-title-row {
@@ -198,10 +206,12 @@ canvas {
   left: 50%;
   bottom: max(8px, env(safe-area-inset-bottom));
   z-index: 34;
-  width: min(390px, 30vw);
-  min-height: 42px;
+  width: min(330px, 30vw);
+  min-height: 38px;
   transform: translateX(-50%);
-  padding: 8px 10px;
+  padding: 6px 8px;
+  border-color: rgba(175, 193, 225, 0.1);
+  background: rgba(5, 9, 18, 0.42);
 }
 
 #huntView .recent-combat-log li:nth-child(n + 3) {
@@ -260,8 +270,11 @@ canvas {
   min-width: 0;
   min-height: 0;
   padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-  overflow: hidden;
-  background: rgba(4, 7, 13, 0.72);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(4, 7, 13, 0.78);
   backdrop-filter: blur(10px);
 }
 
@@ -295,16 +308,14 @@ canvas {
 
 #equipmentView.active .inventory-panel {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  overflow: hidden;
+  grid-template-rows: auto auto auto auto;
+  overflow: visible;
 }
 
 #equipmentView.active #inventoryGrid,
 #equipmentView.active #inventoryEmpty {
   min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 
 #forgeView.active {
@@ -331,7 +342,7 @@ canvas {
 #forgeAutoSalvagePanel {
   grid-column: 2 / 4;
   grid-row: 1 / 3;
-  overflow: hidden;
+  overflow: visible;
 }
 
 #forgeEnhancePanel:not([hidden]) {
@@ -344,28 +355,24 @@ canvas {
   grid-column: 3;
   grid-row: 1 / 3;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  overflow: hidden;
+  grid-template-rows: auto auto;
+  overflow: visible;
 }
 
 #forgeInventoryPanel #forgeInventoryGrid,
 #forgeInventoryPanel #forgeInventoryEmpty {
   min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 
 #forgeSalvagePanel:not([hidden]) {
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto auto auto auto;
 }
 
 #forgeSalvagePanel #salvageInventoryGrid {
   min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 
 #forgeAutoSalvagePanel:not([hidden]) {
@@ -375,8 +382,7 @@ canvas {
 
 #forgeAutoSalvagePanel .auto-salvage-options {
   min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
+  overflow: visible;
 }
 
 #bossView.active {
@@ -387,20 +393,18 @@ canvas {
 #bossView.active .boss-select-panel {
   position: relative;
   width: min(920px, 100%);
-  height: 100%;
+  min-height: 100%;
   justify-self: center;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto auto;
   gap: 10px;
-  overflow: hidden;
+  overflow: visible;
   padding-top: 48px;
 }
 
 #bossView.active #bossCardList {
   min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 
 #bossBattlePanel:not([hidden]) {
@@ -418,14 +422,15 @@ canvas {
 #bossBattlePanel .boss-battlefield {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
   width: 100%;
   height: 100%;
   margin: 0;
   border: 0;
   border-radius: 0;
-  background: #08101a;
+  background: #04070d;
   overflow: hidden;
-  aspect-ratio: 16 / 9;
 }
 
 #bossBattlePanel .boss-battle-heading {
@@ -444,10 +449,10 @@ canvas {
 
 #bossBattlePanel .boss-status-grid {
   position: absolute;
-  top: max(8px, env(safe-area-inset-top));
+  top: calc(max(8px, env(safe-area-inset-top)) + 58px);
   left: max(8px, env(safe-area-inset-left));
   z-index: 4;
-  width: min(300px, 28vw);
+  width: min(250px, 24vw);
   display: grid;
   gap: 6px;
 }
