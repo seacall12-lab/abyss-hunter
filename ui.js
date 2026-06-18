@@ -2422,6 +2422,39 @@
       openUtilitySheet("settings");
       renderSettings();
     }
+    function getFullscreenElement() {
+      return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
+    }
+    function updateFullscreenButton() {
+      const active = getFullscreenElement() === (el.app || document.documentElement);
+      if (el.app) {
+        el.app.classList.toggle("is-fullscreen", active);
+      }
+      if (!active) {
+        tryUnlockOrientation();
+      }
+      el.fullscreenButton.classList.toggle("active", active);
+      el.fullscreenButton.textContent = active ? "EXIT" : "FS";
+      el.fullscreenButton.title = active ? "Exit fullscreen" : "Fullscreen";
+      el.fullscreenButton.setAttribute("aria-label", active ? "Exit fullscreen" : "Fullscreen");
+      resizeCanvas();
+    }
+    function tryLockLandscape() {
+      if (typeof screen === "undefined" || !screen.orientation || typeof screen.orientation.lock !== "function") {
+        return;
+      }
+      const result = screen.orientation.lock("landscape");
+      if (result && typeof result.catch === "function") {
+        result.catch(function () {});
+      }
+    }
+    function tryUnlockOrientation() {
+      if (typeof screen !== "undefined" && screen.orientation && typeof screen.orientation.unlock === "function") {
+        try {
+          screen.orientation.unlock();
+        } catch (error) {}
+      }
+    }
     function toggleFullscreen() {
       unlockAudio();
       const root = el.app || document.documentElement;
@@ -2437,6 +2470,8 @@
               });
             }
           }
+          tryUnlockOrientation();
+          updateFullscreenButton();
           return;
         }
         if (!request) {
@@ -2444,6 +2479,17 @@
           return;
         }
         const result = request.call(root);
+        if (result && typeof result.then === "function") {
+          result.then(function () {
+            tryLockLandscape();
+            updateFullscreenButton();
+          }).catch(function () {
+            updateFullscreenButton();
+          });
+        } else {
+          tryLockLandscape();
+          updateFullscreenButton();
+        }
         if (result && typeof result.catch === "function") {
           result.catch(function () {
             showToast("전체화면 전환이 차단되었습니다.", "error");
@@ -2474,6 +2520,10 @@
     el.logSheetCloseButton.addEventListener("click", closeUtilitySheets);
     el.settingsSheetBackdrop.addEventListener("click", closeUtilitySheets);
     el.settingsSheetCloseButton.addEventListener("click", closeUtilitySheets);
+    document.addEventListener("fullscreenchange", updateFullscreenButton);
+    document.addEventListener("webkitfullscreenchange", updateFullscreenButton);
+    document.addEventListener("MSFullscreenChange", updateFullscreenButton);
+    updateFullscreenButton();
     cleanups.push(function () {
       el.pauseButton.removeEventListener("click", pauseGame);
       el.settingsButton.removeEventListener("click", openSettingsSheet);
@@ -2489,6 +2539,9 @@
       el.logSheetCloseButton.removeEventListener("click", closeUtilitySheets);
       el.settingsSheetBackdrop.removeEventListener("click", closeUtilitySheets);
       el.settingsSheetCloseButton.removeEventListener("click", closeUtilitySheets);
+      document.removeEventListener("fullscreenchange", updateFullscreenButton);
+      document.removeEventListener("webkitfullscreenchange", updateFullscreenButton);
+      document.removeEventListener("MSFullscreenChange", updateFullscreenButton);
     });
 
     el.speedButtons.forEach(function (button) {
