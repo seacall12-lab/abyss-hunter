@@ -1,5 +1,6 @@
 :root {
   color-scheme: dark;
+  --game-scale: 1;
   --bg: #070b12;
   --panel: rgba(18, 27, 44, 0.78);
   --panel-solid: #111929;
@@ -35,8 +36,8 @@ body {
 }
 
 body {
-  display: grid;
-  place-items: center;
+  position: fixed;
+  inset: 0;
   background:
     radial-gradient(circle at 50% 22%, rgba(67, 167, 255, 0.12), transparent 36%),
     linear-gradient(180deg, #07101c 0%, #090c13 62%, #05070c 100%);
@@ -63,34 +64,33 @@ button:disabled {
 }
 
 .app-shell {
-  position: relative;
-  width: min(100vw, calc(100dvh * 16 / 9), 1280px);
-  height: min(100dvh, calc(100vw * 9 / 16), 720px);
-  min-width: 0;
-  min-height: 0;
+  --game-scale: 1;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 1280px;
+  height: 720px;
   overflow: hidden;
   border: 1px solid rgba(175, 193, 225, 0.12);
   border-radius: 8px;
   background: #050912;
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.52);
+  transform: translate(-50%, -50%) scale(var(--game-scale));
+  transform-origin: center center;
 }
 
 .app-shell:fullscreen,
 .app-shell.is-fullscreen {
-  width: 100vw;
-  height: 100dvh;
-  max-width: none;
-  max-height: none;
+  width: 1280px;
+  height: 720px;
   border: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
 .app-shell:-webkit-full-screen {
-  width: 100vw;
-  height: 100dvh;
-  max-width: none;
-  max-height: none;
+  width: 1280px;
+  height: 720px;
   border: 0;
   border-radius: 0;
   box-shadow: none;
@@ -106,8 +106,8 @@ button:disabled {
 
 .top-bar {
   position: absolute;
-  top: max(8px, env(safe-area-inset-top));
-  right: max(8px, env(safe-area-inset-right));
+  top: 12px;
+  right: 12px;
   z-index: 34;
   display: flex;
   gap: 8px;
@@ -258,10 +258,10 @@ button:disabled {
 
 .player-summary {
   position: absolute;
-  top: max(8px, env(safe-area-inset-top));
-  left: max(8px, env(safe-area-inset-left));
+  top: 12px;
+  left: 12px;
   z-index: 34;
-  width: min(216px, 24vw);
+  width: 216px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 8px;
@@ -374,8 +374,8 @@ button:disabled {
 
 .view-tabs {
   position: absolute;
-  left: max(8px, env(safe-area-inset-left));
-  bottom: max(8px, env(safe-area-inset-bottom));
+  left: 12px;
+  bottom: 12px;
   z-index: 36;
   display: grid;
   grid-template-columns: repeat(4, 48px);
