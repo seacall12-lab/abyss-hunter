@@ -40,6 +40,13 @@
     height: min(100dvh, calc(100vw * 9 / 16));
     border-radius: 0;
   }
+
+  .app-shell:fullscreen,
+  .app-shell.is-fullscreen,
+  .app-shell:-webkit-full-screen {
+    width: 100vw;
+    height: 100dvh;
+  }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
@@ -76,7 +83,7 @@
   }
 
   .view-tabs {
-    grid-template-columns: repeat(4, 46px);
+    grid-template-columns: repeat(3, 46px);
   }
 
   .view-tab {
@@ -123,7 +130,8 @@
   }
 
   .top-bar {
-    grid-template-columns: auto;
+    flex-direction: column;
+    align-items: flex-end;
   }
 
   .top-currencies {
